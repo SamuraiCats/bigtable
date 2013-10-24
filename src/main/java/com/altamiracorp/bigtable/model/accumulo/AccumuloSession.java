@@ -38,6 +38,10 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
+    public AccumuloSession (Connector connector) {
+        this.connector = connector;
+    }
+
     @Override
     public void save(Row row, ModelUserContext user) {
         try {
