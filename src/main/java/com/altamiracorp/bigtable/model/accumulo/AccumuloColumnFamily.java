@@ -11,6 +11,7 @@ public class AccumuloColumnFamily extends ColumnFamily {
      */
     public AccumuloColumnFamily (ColumnFamily columnFamily) {
         super(columnFamily.getColumnFamilyName());
+        this.addColumns(columnFamily.getColumns());
     }
 
     public AccumuloColumnFamily (String columnFamilyName) {
