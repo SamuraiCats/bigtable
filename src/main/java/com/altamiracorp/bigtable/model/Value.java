@@ -41,6 +41,10 @@ public class Value implements JSONString {
             return (byte[]) value;
         }
 
+        if (value instanceof Value) {
+            return ((Value) value).toBytes();
+        }
+
         if (value instanceof JSONObject) {
             return jsonObjectToBytes((JSONObject) value);
         }
