@@ -18,13 +18,24 @@ import java.util.*;
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class.getName());
 
+    private static final String ACCUMULO_INSTANCE_NAME = "bigtable.accumulo.instanceName";
+    private static final String ACCUMULO_USER = "bigtable.accumulo.user";
+    private static final String ACCUMULO_PASSWORD = "bigtable.accumulo.password";
+    private static final String ZK_SERVER_NAMES = "bigtable.accumulo.zookeeperServerNames";
+
     private final Connector connector;
     private long maxMemory = 1000000L;
     private long maxLatency = 1000L;
     private int maxWriteThreads = 10;
 
-    public AccumuloSession (Connector connector) {
-        this.connector = connector;
+    public AccumuloSession(Map<String, String> properties) {
+        checkProperties(properties);
+        try {
+            ZooKeeperInstance zk = new ZooKeeperInstance(properties.get(ACCUMULO_INSTANCE_NAME), properties.get(ZK_SERVER_NAMES));
+            this.connector = zk.getConnector(properties.get(ACCUMULO_USER), properties.get(ACCUMULO_PASSWORD).getBytes());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -258,4 +269,23 @@ public class AccumuloSession extends ModelSession {
         }
         return mutation;
     }
+
+    private void checkProperties(Map<String, String> properties) {
+        if (properties.get(ACCUMULO_INSTANCE_NAME) == null) {
+            throw new IllegalStateException("Configuration property " + ACCUMULO_INSTANCE_NAME + " missing!");
+        }
+
+        if (properties.get(ACCUMULO_USER) == null) {
+            throw new IllegalStateException("Configuration property " + ACCUMULO_USER + " missing!");
+        }
+
+        if (properties.get(ACCUMULO_PASSWORD) == null) {
+            throw new IllegalStateException("Configuration property " + ACCUMULO_PASSWORD + " missing!");
+        }
+
+        if (properties.get(ZK_SERVER_NAMES) == null) {
+            throw new IllegalStateException("Configuration property " + ZK_SERVER_NAMES + " missing!");
+        }
+    }
+
 }
