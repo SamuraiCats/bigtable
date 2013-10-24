@@ -7,6 +7,10 @@ public class AccumuloUserContext implements ModelUserContext {
 
     private Authorizations accumuloAuthorizations;
 
+    public AccumuloUserContext () {
+        accumuloAuthorizations = new Authorizations();
+    }
+
     public AccumuloUserContext (Authorizations accumuloAuthorizations) {
         this.accumuloAuthorizations = accumuloAuthorizations;
     }
