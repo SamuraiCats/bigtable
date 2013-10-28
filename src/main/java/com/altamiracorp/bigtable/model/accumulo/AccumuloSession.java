@@ -19,7 +19,7 @@ public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class.getName());
 
     private static final String ACCUMULO_INSTANCE_NAME = "bigtable.accumulo.instanceName";
-    private static final String ACCUMULO_USER = "bigtable.accumulo.user";
+    private static final String ACCUMULO_USER = "bigtable.accumulo.username";
     private static final String ACCUMULO_PASSWORD = "bigtable.accumulo.password";
     private static final String ZK_SERVER_NAMES = "bigtable.accumulo.zookeeperServerNames";
 
