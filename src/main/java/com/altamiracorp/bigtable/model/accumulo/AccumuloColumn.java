@@ -7,14 +7,6 @@ public class AccumuloColumn extends Column{
 
     private ColumnVisibility columnVisibility;
 
-    /**
-     * Decorating constructor for wrapping an abstract data model with column visibility functionality
-     * @param column
-     */
-    public AccumuloColumn (Column column) {
-        super(column.getName(), column.getValue());
-    }
-
     public AccumuloColumn (String name, Object value) {
         super(name,value);
     }

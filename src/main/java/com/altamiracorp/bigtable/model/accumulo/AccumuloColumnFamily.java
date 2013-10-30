@@ -5,15 +5,6 @@ import org.apache.accumulo.core.security.ColumnVisibility;
 
 public class AccumuloColumnFamily extends ColumnFamily {
 
-    /**
-     * Decorator
-     * @param columnFamily
-     */
-    public AccumuloColumnFamily (ColumnFamily columnFamily) {
-        super(columnFamily.getColumnFamilyName());
-        this.addColumns(columnFamily.getColumns());
-    }
-
     public AccumuloColumnFamily (String columnFamilyName) {
         super(columnFamilyName);
     }
