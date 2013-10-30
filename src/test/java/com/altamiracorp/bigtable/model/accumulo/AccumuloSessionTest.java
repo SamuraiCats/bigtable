@@ -1,4 +1,4 @@
-package com.altamiracorp.lumify.model;
+package com.altamiracorp.bigtable.model.accumulo;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -12,7 +12,6 @@ import com.altamiracorp.bigtable.model.ColumnFamily;
 import com.altamiracorp.bigtable.model.Row;
 import com.altamiracorp.bigtable.model.RowKey;
 import com.altamiracorp.bigtable.model.Value;
-import com.altamiracorp.bigtable.model.accumulo.AccumuloSession;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
