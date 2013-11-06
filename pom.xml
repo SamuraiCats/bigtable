@@ -13,7 +13,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20130918</version>
+            <version>20131018</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
