@@ -4,7 +4,6 @@ import com.altamiracorp.bigtable.model.*;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -13,7 +12,10 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class.getName());
@@ -38,7 +40,11 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
-    public AccumuloSession (Connector connector) {
+    public AccumuloSession() {
+
+    }
+
+    public AccumuloSession(Connector connector) {
         this.connector = connector;
     }
 
