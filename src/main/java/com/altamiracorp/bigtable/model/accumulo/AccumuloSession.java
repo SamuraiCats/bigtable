@@ -23,12 +23,12 @@ public class AccumuloSession extends ModelSession {
     private static final String ACCUMULO_PASSWORD = "bigtable.accumulo.password";
     private static final String ZK_SERVER_NAMES = "bigtable.accumulo.zookeeperServerNames";
 
-    private final Connector connector;
+    private Connector connector;
     private long maxMemory = 1000000L;
     private long maxLatency = 1000L;
     private int maxWriteThreads = 10;
 
-    public AccumuloSession(Map<String, String> properties) {
+    public void init(Map<String, String> properties) {
         checkProperties(properties);
         try {
             ZooKeeperInstance zk = new ZooKeeperInstance(properties.get(ACCUMULO_INSTANCE_NAME), properties.get(ZK_SERVER_NAMES));
