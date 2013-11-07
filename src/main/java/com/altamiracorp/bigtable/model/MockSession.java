@@ -10,6 +10,10 @@ public class MockSession extends ModelSession {
     public HashMap<String, List<Row>> tables = new HashMap<String, List<Row>>();
 
     @Override
+    public void init(Map<String, String> properties) {
+    }
+
+    @Override
     public void save(Row row, ModelUserContext user) {
         List<Row> table = tables.get(row.getTableName());
         if (table == null) {
