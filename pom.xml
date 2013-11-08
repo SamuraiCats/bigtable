@@ -9,6 +9,13 @@
 
     <name>BigTable Model Classes</name>
 
+    <distributionManagement>
+        <repository>
+            <id>local</id>
+            <url>file:///var/www/maven/</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.json</groupId>
@@ -29,6 +36,13 @@
     </dependencies>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-file</artifactId>
+                <version>1.0</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
