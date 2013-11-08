@@ -3,6 +3,8 @@ bigtable-model
 
 Simple framework for implementing BigTable style data models in Java.
 
+* https://github.com/nearinfinity/accumulo-model
+
 License
 -------
 Copyright 2013 Altamira Technologies Corporation
