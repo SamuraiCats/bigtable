@@ -12,7 +12,7 @@ import java.util.Map;
 public abstract class ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelSession.class.getName());
 
-    public abstract void init(Map<String, String> properties);
+    public abstract void init(Map properties);
 
     /**
      * Save a row
