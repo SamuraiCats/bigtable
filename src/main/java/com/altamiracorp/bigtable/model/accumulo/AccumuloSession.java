@@ -30,11 +30,12 @@ public class AccumuloSession extends ModelSession {
     private long maxLatency = 1000L;
     private int maxWriteThreads = 10;
 
-    public void init(Map<String, String> properties) {
+    @Override
+    public void init(Map properties) {
         checkProperties(properties);
         try {
-            ZooKeeperInstance zk = new ZooKeeperInstance(properties.get(ACCUMULO_INSTANCE_NAME), properties.get(ZK_SERVER_NAMES));
-            this.connector = zk.getConnector(properties.get(ACCUMULO_USER), properties.get(ACCUMULO_PASSWORD).getBytes());
+            ZooKeeperInstance zk = new ZooKeeperInstance((String)properties.get(ACCUMULO_INSTANCE_NAME), (String)properties.get(ZK_SERVER_NAMES));
+            this.connector = zk.getConnector((String)properties.get(ACCUMULO_USER), ((String)properties.get(ACCUMULO_PASSWORD)).getBytes());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
