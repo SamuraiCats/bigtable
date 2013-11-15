@@ -41,6 +41,10 @@ public class Value implements JSONString {
             return (byte[]) value;
         }
 
+        if (value instanceof Boolean) {
+            return new byte[]{ (byte)( (Boolean)value ? 1 : 0)};
+        }
+
         if (value instanceof Value) {
             return ((Value) value).toBytes();
         }
@@ -95,6 +99,13 @@ public class Value implements JSONString {
             throw new RuntimeException("toInteger failed. Expected 4 bytes found " + this.value.length);
         }
         return ByteBuffer.wrap(this.value).getInt();
+    }
+
+    public Boolean toBoolean() {
+        if (this.value.length != 1) {
+            throw new RuntimeException("toBoolean failed. Expected 1 byte found " + this.value.length);
+        }
+        return (int)this.value[0] == 1;
     }
 
     @Override
