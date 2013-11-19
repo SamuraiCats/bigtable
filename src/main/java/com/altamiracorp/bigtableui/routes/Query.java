@@ -14,10 +14,12 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class Query extends BaseRequestHandler {
+    public static final int MAX_VALUE_LENGTH = 10000;
     private final BigTableRepository bigTableRepository;
 
     @Inject
@@ -51,7 +53,7 @@ public class Query extends BaseRequestHandler {
 
     private JSONObject rowToJson(Row row) {
         JSONObject result = new JSONObject();
-        result.put("key", toJSONString(row.getRowKey().toString().getBytes()));
+        result.put("key", row.getRowKey().toString());
         result.put("columnFamilies", columnFamiliesToJson(row.getColumnFamilies()));
         return result;
     }
@@ -69,41 +71,20 @@ public class Query extends BaseRequestHandler {
     private JSONObject columnsToJson(Collection<Column> columns) {
         JSONObject result = new JSONObject();
         for (Column column : columns) {
-            result.put(column.getName(), columnValueToJson(column.getValue()));
+            result.put(column.getName(), columnToJson(column.getValue()));
         }
         return result;
     }
 
-    private String columnValueToJson(Value value) {
-        return toJSONString(value.toBytes());
-    }
-
-    private String toJSONString(byte[] value) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < value.length; i++) {
-            byte b = value[i];
-            if (b == '"') {
-                sb.append("\\\"");
-            } else if (b == '\\') {
-                sb.append("\\\\");
-            } else if (b == '/') {
-                sb.append("\\/");
-            } else if (b == '\b') {
-                sb.append("\\b");
-            } else if (b == '\f') {
-                sb.append("\\f");
-            } else if (b == '\n') {
-                sb.append("\\n");
-            } else if (b == '\r') {
-                sb.append("\\r");
-            } else if (b == '\t') {
-                sb.append("\\t");
-            } else if (b >= ' ' && b <= '~') {
-                sb.append((char) b);
-            } else {
-                sb.append("\\x" + String.format("%02X", b));
-            }
+    private JSONObject columnToJson(Value value) {
+        byte[] v = value.toBytes();
+        if (v.length > MAX_VALUE_LENGTH) {
+            v = Arrays.copyOfRange(v, 0, 10000);
         }
-        return sb.toString();
+
+        JSONObject result = new JSONObject();
+        result.put("value", new String(v));
+        result.put("length", value.toBytes().length);
+        return result;
     }
 }

@@ -10,18 +10,18 @@
         <tbody>
             <% rows.forEach(function(row) { %>
                 <tr>
-                    <td colspan="3" class="warning"><%= row.key %></td>
+                    <td colspan="3" class="warning"><%= bytesToString(row.key) %></td>
                 </tr>
                 <% Object.keys(row.columnFamilies).forEach(function(columnFamilyKey, columnFamilyIndex) { %>
                     <% var columnFamily = row.columnFamilies[columnFamilyKey]; %>
                     <% Object.keys(columnFamily.columns).forEach(function(columnKey, columnIndex) { %>
-                        <% var columnValue = columnFamily.columns[columnKey]; %>
+                        <% var column = columnFamily.columns[columnKey]; %>
                         <tr>
                             <% if(columnIndex == 0) { %>
-                                <td rowspan="<%= Object.keys(columnFamily.columns).length %>"><%= columnFamilyKey %></td>
+                                <td rowspan="<%= Object.keys(columnFamily.columns).length %>"><%= bytesToString(columnFamilyKey) %></td>
                             <% } %>
-                            <td><%= columnKey %></td>
-                            <td><%= columnValue %></td>
+                            <td><%= bytesToString(columnKey) %></td>
+                            <td><%= columnToHtml(column) %></td>
                         </tr>
                     <% }) %>
                 <% }) %>

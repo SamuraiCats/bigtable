@@ -1,0 +1,12 @@
+<%= bytesToString(value) %>
+<% if(length == 8) { %>
+    <div class='additional-info'>
+        <div class='name'>Long</div>
+        <div class='value'><%= bytesToLong(value) %></div>
+    </div>
+
+    <div class='additional-info'>
+        <div class='name'>Double</div>
+        <div class='value'><%= bytesToDouble(value) %></div>
+    </div>
+<% } %>
