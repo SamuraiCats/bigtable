@@ -29,6 +29,10 @@
             <id>ext-snapshots</id>
             <url>${internal.project.repo}</url>
         </repository>
+        <repository>
+            <id>com.cloudera</id>
+            <url>https://repository.cloudera.com/content/repositories/releases/</url>
+        </repository>
     </repositories>
 
     <dependencies>
