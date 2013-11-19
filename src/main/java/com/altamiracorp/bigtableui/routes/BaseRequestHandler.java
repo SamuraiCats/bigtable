@@ -11,9 +11,4 @@ public abstract class BaseRequestHandler implements Handler {
         response.setContentType("application/json");
         response.getWriter().write(json.toString());
     }
-
-    protected void respondWithHtml(final HttpServletResponse response, String htmlString) throws IOException {
-        response.setContentType("text/html");
-        response.getWriter().write(htmlString);
-    }
 }

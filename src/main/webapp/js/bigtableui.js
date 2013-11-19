@@ -9,23 +9,21 @@ var queryResultsColumnTemplate = new EJS({url: '/templates/queryResultsColumn.ej
 $(function () {
     loadUser();
     $(window).hashchange(onNavigate);
-    $('a.logout').click(logout);
     onNavigate();
 });
-
-function logout() {
-    try {
-        document.execCommand("ClearAuthenticationCache");
-        window.location.href('/logout');
-    } catch (ex) {
-    }
-}
 
 function loadUser() {
     $.get('/user', function (json) {
         console.log('/user', json);
+        $('.user-dropdown .logged-in').show();
+        $('.user-dropdown .logged-out').hide();
         $('#user-name').text(json.username);
-    });
+    })
+        .fail(function () {
+            $('.user-dropdown .logged-out').show();
+            $('.user-dropdown .logged-in').hide();
+            $('#user-name').text("Not Logged In");
+        });
 }
 
 function loadTableList() {
@@ -33,7 +31,10 @@ function loadTableList() {
         console.log('/table', json);
         var html = tablesTemplate.render(json);
         $('#main-pane').html(html);
-    });
+    })
+        .fail(function () {
+            $('#main-pane').text("Not Logged In");
+        });
 }
 
 function loadTable(tableName) {
