@@ -1,7 +1,8 @@
 package com.altamiracorp.bigtableui;
 
 import com.altamiracorp.bigtableui.routes.Query;
-import com.altamiracorp.bigtableui.routes.Tables;
+import com.altamiracorp.bigtableui.routes.TableGet;
+import com.altamiracorp.bigtableui.routes.UserGet;
 import com.altamiracorp.bigtableui.security.AuthenticationProvider;
 import com.altamiracorp.miniweb.Handler;
 import com.altamiracorp.miniweb.StaticFileHandler;
@@ -31,8 +32,9 @@ public class Router extends HttpServlet {
         app = new WebApp(config, injector);
         app.get("/index.html", authenticatorInstance, new StaticFileHandler(config));
 
-        app.get("/query", authenticator, Query.class);
-        app.get("/tables", authenticator, Tables.class);
+        app.get("/user", authenticator, UserGet.class);
+        app.get("/table", authenticator, TableGet.class);
+        app.get("/table/{tableName}", authenticator, Query.class);
     }
 
     @Override

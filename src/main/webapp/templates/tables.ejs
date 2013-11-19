@@ -1,0 +1,8 @@
+
+<h1>Tables</h1>
+
+<div class="list-group">
+    <% tables.forEach(function(table) { %>
+        <a href='#table/<%= table.name %>' class="list-group-item"><%= table.name %></a>
+    <% }) %>
+</div>

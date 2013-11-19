@@ -2,12 +2,14 @@ package com.altamiracorp.bigtableui.security;
 
 import com.altamiracorp.miniweb.HandlerChain;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import org.apache.commons.codec.binary.Base64;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+@Singleton
 public class BasicAuthenticationProvider extends AuthenticationProvider {
     private static final String HTTP_BASIC_REALM = "lumify";
     private static final String HTTP_AUTHORIZATION_HEADER = "Authorization";
