@@ -3,6 +3,7 @@ package com.altamiracorp.bigtableui.security;
 import com.altamiracorp.miniweb.Handler;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 public abstract class AuthenticationProvider implements Handler {
@@ -20,4 +21,6 @@ public abstract class AuthenticationProvider implements Handler {
     public static User getUser(HttpServletRequest request) {
         return AuthenticationProvider.getUser(request.getSession());
     }
+
+    public abstract void logOut(HttpServletRequest request, HttpServletResponse response);
 }

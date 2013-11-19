@@ -20,7 +20,12 @@
                             <% if(columnIndex == 0) { %>
                                 <td rowspan="<%= Object.keys(columnFamily.columns).length %>"><%= bytesToString(columnFamilyKey) %></td>
                             <% } %>
-                            <td><%= bytesToString(columnKey) %></td>
+                            <td>
+                                <%= bytesToString(columnKey) %>
+                                <% if(column.visibility) { %>
+                                    <small><%= column.visibility %></small>
+                                <% } %>
+                            </td>
                             <td style="word-break: break-word;"><%= columnToHtml(column) %></td>
                         </tr>
                     <% }) %>

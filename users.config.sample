@@ -1,0 +1,6 @@
+user1.auths=auth1,auth2
+user1.password=user1
+
+user2.auths=auth1
+user2.password=user2
+

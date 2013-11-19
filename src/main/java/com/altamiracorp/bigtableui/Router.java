@@ -1,5 +1,6 @@
 package com.altamiracorp.bigtableui;
 
+import com.altamiracorp.bigtableui.routes.LogOut;
 import com.altamiracorp.bigtableui.routes.Query;
 import com.altamiracorp.bigtableui.routes.TableGet;
 import com.altamiracorp.bigtableui.routes.UserGet;
@@ -31,6 +32,7 @@ public class Router extends HttpServlet {
 
         app = new WebApp(config, injector);
         app.get("/index.html", authenticatorInstance, new StaticFileHandler(config));
+        app.get("/logout", new LogOut(authenticatorInstance));
 
         app.get("/user", authenticator, UserGet.class);
         app.get("/table", authenticator, TableGet.class);

@@ -25,11 +25,11 @@ public class BasicAuthenticationProvider extends AuthenticationProvider {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, HandlerChain chain) throws Exception {
         if (isAuthorizationPresent(request)) {
-            String username = parseUsernameFromAuthorization(request);
-            if (username == null) {
+            String[] usernameAndPassword = parseUsernameAndPasswordFromAuthorization(request);
+            if (usernameAndPassword == null) {
                 requestAuthorization(response);
             } else {
-                User user = userRepository.findOrAddUser(username);
+                User user = userRepository.validateUser(usernameAndPassword[0], usernameAndPassword[1]);
                 if (user == null) {
                     response.sendError(HTTP_NOT_AUTHORIZED_ERROR_CODE);
                     return;
@@ -47,7 +47,7 @@ public class BasicAuthenticationProvider extends AuthenticationProvider {
         response.sendError(HTTP_NOT_AUTHORIZED_ERROR_CODE);
     }
 
-    private String parseUsernameFromAuthorization(HttpServletRequest request) {
+    private String[] parseUsernameAndPasswordFromAuthorization(HttpServletRequest request) {
         String base64Auth = request.getHeader(HTTP_AUTHORIZATION_HEADER);
         String[] authComponents = base64Auth.split(" ");
 
@@ -55,7 +55,7 @@ public class BasicAuthenticationProvider extends AuthenticationProvider {
             String usernamePasswordCombo = new String(Base64.decodeBase64(authComponents[1]));
             String[] usernamePassword = usernamePasswordCombo.split(":");
             if (usernamePassword.length == 2) {
-                return usernamePassword[0];
+                return usernamePassword;
             }
         }
 
@@ -64,5 +64,10 @@ public class BasicAuthenticationProvider extends AuthenticationProvider {
 
     private boolean isAuthorizationPresent(HttpServletRequest request) {
         return request.getHeader(HTTP_AUTHORIZATION_HEADER) != null;
+    }
+
+    @Override
+    public void logOut(HttpServletRequest request, HttpServletResponse response) {
+        setUser(request, null);
     }
 }

@@ -9,8 +9,17 @@ var queryResultsColumnTemplate = new EJS({url: '/templates/queryResultsColumn.ej
 $(function () {
     loadUser();
     $(window).hashchange(onNavigate);
+    $('a.logout').click(logout);
     onNavigate();
 });
+
+function logout() {
+    try {
+        document.execCommand("ClearAuthenticationCache");
+        window.location.href('/logout');
+    } catch (ex) {
+    }
+}
 
 function loadUser() {
     $.get('/user', function (json) {
