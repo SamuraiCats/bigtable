@@ -21,7 +21,7 @@
                                 <td rowspan="<%= Object.keys(columnFamily.columns).length %>"><%= bytesToString(columnFamilyKey) %></td>
                             <% } %>
                             <td><%= bytesToString(columnKey) %></td>
-                            <td><%= columnToHtml(column) %></td>
+                            <td style="word-break: break-word;"><%= columnToHtml(column) %></td>
                         </tr>
                     <% }) %>
                 <% }) %>
