@@ -12,9 +12,9 @@
                 <tr>
                     <td colspan="3" class="warning"><%= bytesToString(row.key) %></td>
                 </tr>
-                <% Object.keys(row.columnFamilies).forEach(function(columnFamilyKey, columnFamilyIndex) { %>
+                <% Object.keys(row.columnFamilies).sort().forEach(function(columnFamilyKey, columnFamilyIndex) { %>
                     <% var columnFamily = row.columnFamilies[columnFamilyKey]; %>
-                    <% Object.keys(columnFamily.columns).forEach(function(columnKey, columnIndex) { %>
+                    <% Object.keys(columnFamily.columns).sort().forEach(function(columnKey, columnIndex) { %>
                         <% var column = columnFamily.columns[columnKey]; %>
                         <tr>
                             <% if(columnIndex == 0) { %>
