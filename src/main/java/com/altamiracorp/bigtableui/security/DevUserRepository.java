@@ -40,6 +40,12 @@ public class DevUserRepository extends UserRepository {
         }
         String authsStr = usersConfig.getProperty(username + ".auths");
         String[] auths = authsStr.split(",");
-        return new User(username, new AccumuloUserContext(new Authorizations(auths)));
+        Authorizations authorizations;
+        if (auths.length == 0) {
+            authorizations = new Authorizations();
+        } else {
+            authorizations = new Authorizations(auths);
+        }
+        return new User(username, new AccumuloUserContext(authorizations));
     }
 }
