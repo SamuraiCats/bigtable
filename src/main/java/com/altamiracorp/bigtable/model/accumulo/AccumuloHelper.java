@@ -17,7 +17,17 @@ import java.util.*;
 
 public class AccumuloHelper {
     public static boolean addRowToWriter(BatchWriter writer, Row row) throws MutationsRejectedException {
-        Mutation mutation = new Mutation(row.getRowKey().toString());
+        if (row == null) {
+            throw new NullPointerException("row cannot be null");
+        }
+        if (row.getRowKey() == null) {
+            throw new NullPointerException("rowKey cannot be null");
+        }
+        String rowKey = row.getRowKey().toString();
+        if (rowKey.length() == 0) {
+            throw new NullPointerException("rowKey cannot have 0 length");
+        }
+        Mutation mutation = new Mutation(rowKey);
         Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
         for (ColumnFamily columnFamily : columnFamilies) {
             addColumnFamilyToMutation(mutation, columnFamily);
@@ -40,7 +50,7 @@ public class AccumuloHelper {
     }
 
     private static void addColumnDeleteToMutation(Mutation mutation, Column column, String columnFamilyName) {
-        if (column instanceof AccumuloColumn && ((AccumuloColumn)column).getColumnVisibility() != null) {
+        if (column instanceof AccumuloColumn && ((AccumuloColumn) column).getColumnVisibility() != null) {
             mutation.putDelete(columnFamilyName, column.getName(), ((AccumuloColumn) column).getColumnVisibility());
         } else {
             mutation.putDelete(columnFamilyName, column.getName());
@@ -54,7 +64,7 @@ public class AccumuloHelper {
             value = new Value(v.toBytes());
         }
 
-        if (column instanceof AccumuloColumn && ((AccumuloColumn)column).getColumnVisibility() != null) {
+        if (column instanceof AccumuloColumn && ((AccumuloColumn) column).getColumnVisibility() != null) {
             mutation.put(columnFamilyName, column.getName(), ((AccumuloColumn) column).getColumnVisibility(), value);
         } else {
             mutation.put(columnFamilyName, column.getName(), value);
