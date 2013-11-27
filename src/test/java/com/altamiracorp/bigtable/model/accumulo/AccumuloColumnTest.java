@@ -50,7 +50,7 @@ public class AccumuloColumnTest {
 
     @Test
     public void testColumnVisibility () {
-        Row row = new Row(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        Row<? extends RowKey> row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
         ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
         columnFamily.set("testColumn1","testValue1");
         columnFamily.addColumn(new AccumuloColumn("testColumn2",new Value("testValue2"), new ColumnVisibility("A|B")));
@@ -59,11 +59,11 @@ public class AccumuloColumnTest {
 
         accumuloSession.save(row, adminUser);
 
-        Row adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
+        Row<? extends RowKey> adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
         ColumnFamily adminQueryColumnFamily = adminQueryRow.get("testColumnFamily1");
         assertEquals(3, adminQueryColumnFamily.getColumns().size());
 
-        Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
+        Row<? extends RowKey> staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
         assertEquals(2, staffQueryColumnFamily.getColumns().size());
     }

@@ -3,6 +3,7 @@ package com.altamiracorp.bigtable.model.accumulo;
 import com.altamiracorp.bigtable.model.*;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -31,8 +32,10 @@ public class AccumuloSession extends ModelSession {
     private int maxWriteThreads = 10;
 
     @Override
-    public void init(Map properties) {
-        checkProperties(properties);
+    public void init(Map<String, String> properties) {
+		Map<String, String> checkedProperties = properties;
+    	
+    	checkProperties(checkedProperties);
         try {
             ZooKeeperInstance zk = new ZooKeeperInstance((String)properties.get(ACCUMULO_INSTANCE_NAME), (String)properties.get(ZK_SERVER_NAMES));
             this.connector = zk.getConnector((String)properties.get(ACCUMULO_USER), ((String)properties.get(ACCUMULO_PASSWORD)).getBytes());
@@ -50,7 +53,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void save(Row row, ModelUserContext user) {
+    public void save(Row<? extends RowKey> row, ModelUserContext user) {
         try {
             BatchWriter writer = connector.createBatchWriter(row.getTableName(), getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
             AccumuloHelper.addRowToWriter(writer, row);
@@ -64,13 +67,13 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void saveMany(String tableName, Collection<Row> rows, ModelUserContext user) {
+    public void saveMany(String tableName, Collection<Row<? extends RowKey>> rows, ModelUserContext user) {
         if (rows.size() == 0) {
             return;
         }
         try {
             BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
-            for (Row row : rows) {
+            for (Row<? extends RowKey> row : rows) {
                 AccumuloHelper.addRowToWriter(writer, row);
             }
             writer.flush();
@@ -84,7 +87,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public List<Row> findByRowKeyRange(String tableName, String rowKeyStart, String rowKeyEnd, ModelUserContext user) {
+    public List<Row<? extends RowKey>> findByRowKeyRange(String tableName, String rowKeyStart, String rowKeyEnd, ModelUserContext user) {
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             if (rowKeyStart != null) {
@@ -97,12 +100,12 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public List<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
+    public List<Row<? extends RowKey>> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
         return findByRowKeyRange(tableName, rowKeyPrefix, rowKeyPrefix + "ZZZZ", user); // TODO is this the best way?
     }
 
     @Override
-    public List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
+    public List<Row<? extends RowKey>> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             scanner.setRange(new Range());
@@ -118,11 +121,11 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public Row findByRowKey(String tableName, String rowKey, ModelUserContext user) {
+    public Row<? extends RowKey> findByRowKey(String tableName, String rowKey, ModelUserContext user) {
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             scanner.setRange(new Range(rowKey));
-            List<Row> rows = AccumuloHelper.scannerToRows(tableName, scanner);
+            List<Row<? extends RowKey>> rows = AccumuloHelper.scannerToRows(tableName, scanner);
             if (rows.size() == 0) {
                 return null;
             }
@@ -136,7 +139,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public Row findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user) {
+    public Row<? extends RowKey> findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user) {
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             scanner.setRange(new Range(rowKey));
@@ -147,7 +150,7 @@ public class AccumuloSession extends ModelSession {
                     scanner.fetchColumn(new Text(columnFamilyAndColumnQualifier.getKey()), new Text(columnFamilyAndColumnQualifier.getValue()));
                 }
             }
-            List<Row> rows = AccumuloHelper.scannerToRows(tableName, scanner);
+            List<Row<? extends RowKey>> rows = AccumuloHelper.scannerToRows(tableName, scanner);
             if (rows.size() == 0) {
                 return null;
             }
@@ -214,7 +217,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
+    public void deleteColumn(Row<? extends RowKey> row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
         LOGGER.info("delete column: " + columnQualifier + " from columnFamily: " + columnFamily + ", row: " + row.getRowKey().toString());
         try {
             BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
@@ -264,7 +267,7 @@ public class AccumuloSession extends ModelSession {
         this.maxWriteThreads = maxWriteThreads;
     }
 
-    public static Mutation createMutationFromRow(Row row) {
+    public static Mutation createMutationFromRow(Row<? extends RowKey> row) {
         Mutation mutation = null;
         Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
         for (ColumnFamily columnFamily : columnFamilies) {

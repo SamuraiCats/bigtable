@@ -68,7 +68,7 @@ public class AccumuloSessionTest {
 
     @Test
     public void testSave() throws TableNotFoundException {
-        Row row = new Row(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        Row<? extends RowKey> row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
 
         ColumnFamily columnFamily1 = new ColumnFamily("testColumnFamily1");
         columnFamily1.set("1testColumn1", "1testColumn1Value");
@@ -148,7 +148,7 @@ public class AccumuloSessionTest {
 
         when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
-        Row row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey", queryUser);
+        Row<? extends RowKey> row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey", queryUser);
         assertEquals(TEST_TABLE_NAME, row.getTableName());
         assertEquals("testRowKey", row.getRowKey().toString());
         assertEquals(2, row.getColumnFamilies().size());
@@ -180,14 +180,14 @@ public class AccumuloSessionTest {
 
         when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
-        List<Row> rows = accumuloSession.findByRowKeyRange(TEST_TABLE_NAME, "testRowKey", "testRowKeyZ", queryUser);
+        List<Row<? extends RowKey>> rows = accumuloSession.findByRowKeyRange(TEST_TABLE_NAME, "testRowKey", "testRowKeyZ", queryUser);
         assertEquals(2, rows.size());
 
-        Row row1 = rows.get(0);
+        Row<? extends RowKey> row1 = rows.get(0);
         assertEquals("testRowKey1", row1.getRowKey().toString());
         assertEquals("testValue1", row1.get("testColumnFamily1").get("testColumn1").toString());
 
-        Row row2 = rows.get(1);
+        Row<? extends RowKey> row2 = rows.get(1);
         assertEquals("testRowKey2", row2.getRowKey().toString());
         assertEquals("testValue2", row2.get("testColumnFamily2").get("testColumn2").toString());
     }
@@ -208,10 +208,10 @@ public class AccumuloSessionTest {
 
         when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
-        List<Row> rows = accumuloSession.findByRowKeyRegex(TEST_TABLE_NAME, ".*1", queryUser);
+        List<Row<? extends RowKey>> rows = accumuloSession.findByRowKeyRegex(TEST_TABLE_NAME, ".*1", queryUser);
         assertEquals(1, rows.size());
 
-        Row row1 = rows.get(0);
+        Row<? extends RowKey> row1 = rows.get(0);
         assertEquals("testRowKey1", row1.getRowKey().toString());
         assertEquals("testValue1", row1.get("testColumnFamily1").get("testColumn1").toString());
     }
