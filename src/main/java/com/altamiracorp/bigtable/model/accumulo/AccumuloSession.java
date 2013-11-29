@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AccumuloSession extends ModelSession {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
 
     private static final String ACCUMULO_INSTANCE_NAME = "bigtable.accumulo.instanceName";
     private static final String ACCUMULO_USER = "bigtable.accumulo.username";
@@ -33,6 +33,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void init(Map<String, String> properties) {
+    	LOGGER.trace("init called with parameters: properties=?", properties);
 		Map<String, String> checkedProperties = properties;
     	
     	checkProperties(checkedProperties);
@@ -54,6 +55,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void save(Row<? extends RowKey> row, ModelUserContext user) {
+    	LOGGER.trace("save called with parameters: row=?, user=?", row, user);
         try {
             BatchWriter writer = connector.createBatchWriter(row.getTableName(), getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
             AccumuloHelper.addRowToWriter(writer, row);
@@ -68,6 +70,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void saveMany(String tableName, Collection<Row<? extends RowKey>> rows, ModelUserContext user) {
+    	LOGGER.trace("saveMany called with parameters: tableName=?, rows=?, user=?", tableName, rows, user);
         if (rows.size() == 0) {
             return;
         }
@@ -88,7 +91,8 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public List<Row<? extends RowKey>> findByRowKeyRange(String tableName, String rowKeyStart, String rowKeyEnd, ModelUserContext user) {
-        try {
+    	LOGGER.trace("findByRowKeyRange called with parameters: tableName=?, rowKeyStart=?, rowKeyEnd=?, user=?", tableName, rowKeyStart, rowKeyEnd, user);
+    	try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             if (rowKeyStart != null) {
                 scanner.setRange(new Range(rowKeyStart, rowKeyEnd));
@@ -108,7 +112,8 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public List<Row<? extends RowKey>> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
-        try {
+    	LOGGER.trace("findByRowKeyRegex called with parameters: tableName=?, rowKeyRegex=?, user=?", tableName, rowKeyRegex, user);
+    	try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             scanner.setRange(new Range());
 
@@ -124,6 +129,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public Row<? extends RowKey> findByRowKey(String tableName, String rowKey, ModelUserContext user) {
+    	LOGGER.trace("findByRowKey called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             scanner.setRange(new Range(rowKey));
@@ -142,7 +148,8 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public Row<? extends RowKey> findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user) {
-        try {
+    	LOGGER.trace("findByRowKey called with parameters: tableName=?, rowKey=?, columnsToReturn=?, user=?", tableName, rowKey, columnsToReturn, user);
+    	try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             scanner.setRange(new Range(rowKey));
             for (Map.Entry<String, String> columnFamilyAndColumnQualifier : columnsToReturn.entrySet()) {
@@ -167,7 +174,8 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void initializeTable(String tableName, ModelUserContext user) {
-        LOGGER.info("initializeTable: " + tableName);
+    	LOGGER.trace("initializeTable called with parameters: tableName=?, user=?", tableName, user);
+        LOGGER.debug("initializeTable: " + tableName);
         try {
             if (!connector.tableOperations().exists(tableName)) {
                 connector.tableOperations().create(tableName);
@@ -183,7 +191,8 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void deleteTable(String tableName, ModelUserContext user) {
-        LOGGER.info("deleteTable: " + tableName);
+    	LOGGER.trace("deleteTable called with parameters: tableName=?, user=?", tableName, user);
+    	LOGGER.debug("deleteTable: " + tableName);
         try {
             if (connector.tableOperations().exists(tableName)) {
                 connector.tableOperations().delete(tableName);
@@ -199,8 +208,8 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
-        LOGGER.info("deleteRow: " + rowKey);
-        try {
+    	LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
+    	try {
             // TODO: Find a better way to delete a single row given the row key
             String strRowKey = rowKey.toString();
             char lastChar = strRowKey.charAt(strRowKey.length() - 1);
@@ -220,8 +229,8 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void deleteColumn(Row<? extends RowKey> row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
-        LOGGER.info("delete column: " + columnQualifier + " from columnFamily: " + columnFamily + ", row: " + row.getRowKey().toString());
-        try {
+    	LOGGER.trace("deleteColumn called with parameters: row=?, tableName=?, columnFamily=?, columnQualifier=?, user=?", row, tableName, columnFamily, columnQualifier, user);
+    	try {
             BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
             Mutation mutation = createMutationFromRow(row);
             mutation.putDelete(new Text(columnFamily), new Text(columnQualifier));
@@ -237,6 +246,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public List<String> getTableList(ModelUserContext user) {
+    	LOGGER.trace("getTableList called with parameters: user=?", user);
         return new ArrayList<String>(this.connector.tableOperations().list());
     }
 
@@ -270,6 +280,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     public static Mutation createMutationFromRow(Row<? extends RowKey> row) {
+    	LOGGER.trace("createMutationFromRow called with parameters: row=?", row);
         Mutation mutation = null;
         Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
         for (ColumnFamily columnFamily : columnFamilies) {
