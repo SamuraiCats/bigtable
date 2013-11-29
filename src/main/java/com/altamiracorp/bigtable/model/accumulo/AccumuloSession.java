@@ -1,22 +1,36 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import com.altamiracorp.bigtable.model.*;
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
-
-import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Range;
-import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.iterators.user.RegExFilter;
-import org.apache.hadoop.io.Text;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
+import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.user.RegExFilter;
+import org.apache.accumulo.core.iterators.user.RowDeletingIterator;
+import org.apache.hadoop.io.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.altamiracorp.bigtable.model.Column;
+import com.altamiracorp.bigtable.model.ColumnFamily;
+import com.altamiracorp.bigtable.model.ModelSession;
+import com.altamiracorp.bigtable.model.Row;
+import com.altamiracorp.bigtable.model.RowKey;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -26,6 +40,9 @@ public class AccumuloSession extends ModelSession {
     private static final String ACCUMULO_PASSWORD = "bigtable.accumulo.password";
     private static final String ZK_SERVER_NAMES = "bigtable.accumulo.zookeeperServerNames";
 
+    private static final String ROW_DELETING_ITERATOR_NAME = "RowDeletingIterator";
+    private static final int ROW_DELETING_ITERATOR_PRIORITY = 7;
+    		
     private Connector connector;
     private long maxMemory = 1000000L;
     private long maxLatency = 1000L;
@@ -209,21 +226,30 @@ public class AccumuloSession extends ModelSession {
     @Override
     public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
     	LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
+    	// In most instances (e.g., when reading is not necessary), the RowDeletingIterator gives better performance 
+    	// than the deleting mutation. This is due to the fact that Deleting mutations marks each entry with a delete 
+    	// marker.  Using the iterator marks a whole row with a single mutation.
     	try {
-            // TODO: Find a better way to delete a single row given the row key
-            String strRowKey = rowKey.toString();
-            char lastChar = strRowKey.charAt(strRowKey.length() - 1);
-            char asciiCharBeforeLastChar = (char) (((int) lastChar) - 1);
-            String precedingRowKey = strRowKey.substring(0, strRowKey.length() - 1) + asciiCharBeforeLastChar;
-            Text startRowKey = new Text(precedingRowKey);
-            Text endRowKey = new Text(strRowKey);
-            connector.tableOperations().deleteRows(tableName, startRowKey, endRowKey);
-        } catch (AccumuloException e) {
-            throw new RuntimeException(e);
-        } catch (AccumuloSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
+    		BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+        	try {
+	        	IteratorSetting is = new IteratorSetting( ROW_DELETING_ITERATOR_PRIORITY,
+						ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
+	    		connector.tableOperations().attachIterator(tableName, is);
+				Mutation mutation = new Mutation(rowKey.toString());
+				mutation.put("", "", RowDeletingIterator.DELETE_ROW_VALUE);
+				writer.flush();
+				connector.tableOperations().flush(tableName, null, null, true);
+        	} catch (AccumuloException ae) {
+                throw new RuntimeException(ae);
+            } catch (AccumuloSecurityException ase) {
+                throw new RuntimeException(ase);
+            } finally {
+				writer.close();
+			}        
+        } catch (MutationsRejectedException mre) {
+        	throw new RuntimeException(mre);
+		} catch (TableNotFoundException tnfe) {
+			throw new RuntimeException(tnfe);
         }
     }
 
@@ -236,11 +262,14 @@ public class AccumuloSession extends ModelSession {
             mutation.putDelete(new Text(columnFamily), new Text(columnQualifier));
             writer.addMutation(mutation);
             writer.flush();
+            connector.tableOperations().flush(tableName, null, null, true);
             writer.close();
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (MutationsRejectedException e) {
-            throw new RuntimeException(e);
+    	} catch (AccumuloException ae) {
+    		 throw new RuntimeException(ae);
+		} catch (AccumuloSecurityException ase) {
+			 throw new RuntimeException(ase);
+		} catch (TableNotFoundException tne) {
+            throw new RuntimeException(tne);
         }
     }
 
@@ -252,7 +281,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void close() {
-        // TODO: close me
+       //Accumulo a persistent connection object, so this is unnecessary
     }
 
     public long getMaxMemory() {
