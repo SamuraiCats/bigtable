@@ -1,25 +1,11 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.when;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.altamiracorp.bigtable.model.ColumnFamily;
 import com.altamiracorp.bigtable.model.Row;
 import com.altamiracorp.bigtable.model.RowKey;
 import com.altamiracorp.bigtable.model.Value;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.RowIterator;
-import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockConnector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.Key;
@@ -34,6 +20,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.when;
 
 
 @RunWith(JUnit4.class)
@@ -162,6 +156,27 @@ public class AccumuloSessionTest {
         ColumnFamily testColumnFamily2 = row.get("testColumnFamily2");
         assertEquals(1, testColumnFamily2.getColumns().size());
         assertEquals("2testValue1", testColumnFamily2.get("2testColumn1").toString());
+    }
+
+    @Test
+    public void testFindByRowStartsWith() throws TableNotFoundException, MutationsRejectedException {
+        BatchWriter writer = connector.createBatchWriter(TEST_TABLE_NAME, maxMemory, maxLatency, maxWriteThreads);
+        Mutation mutation = new Mutation("testRowKey1");
+        mutation.put("testColumnFamily1", "1testColumn1", "1testValue1");
+        writer.addMutation(mutation);
+
+        mutation = new Mutation("testRowKey2");
+        mutation.put("testColumnFamily1", "1testColumn1", "1testValue1");
+        writer.addMutation(mutation);
+        writer.close();
+
+        when(queryUser.getAuthorizations()).thenReturn(authorizations);
+
+        List<Row> row = accumuloSession.findByRowStartsWith(TEST_TABLE_NAME, "testRowKey", queryUser);
+        assertEquals(2, row.size());
+
+        assertEquals("testRowKey1", row.get(0).getRowKey().toString());
+        assertEquals("testRowKey2", row.get(1).getRowKey().toString());
     }
 
     @Test
