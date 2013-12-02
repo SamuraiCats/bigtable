@@ -122,7 +122,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public List<Row<? extends RowKey>> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
-        return findByRowKeyRange(tableName, rowKeyPrefix, rowKeyPrefix + "ZZZZ", user); // TODO is this the best way?
+        return findByRowKeyRange(tableName, rowKeyPrefix, rowKeyPrefix + "ZZZZ", user);
     }
 
     @Override
