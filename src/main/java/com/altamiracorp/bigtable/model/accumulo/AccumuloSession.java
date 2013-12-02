@@ -122,9 +122,7 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public List<Row<? extends RowKey>> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
-    	//Accumulo ranges work by inclusive start/exclusive end principle.  When searching for a specific
-    	//record, it is suggested to add a null terminator ('\0'), as this will not be used by other strings
-        return findByRowKeyRange(tableName, rowKeyPrefix, rowKeyPrefix + "\0", user);
+        return findByRowKeyRange(tableName, rowKeyPrefix, rowKeyPrefix + "ZZZZ", user); // TODO is this the best way?
     }
 
     @Override
