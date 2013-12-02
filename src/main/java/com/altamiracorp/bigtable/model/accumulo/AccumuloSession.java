@@ -223,35 +223,41 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
-    @Override
-    public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
-    	LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
-    	// In most instances (e.g., when reading is not necessary), the RowDeletingIterator gives better performance 
-    	// than the deleting mutation. This is due to the fact that Deleting mutations marks each entry with a delete 
-    	// marker.  Using the iterator marks a whole row with a single mutation.
-    	try {
-    		BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
-        	try {
-	        	IteratorSetting is = new IteratorSetting( ROW_DELETING_ITERATOR_PRIORITY,
+	@Override
+	public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
+		LOGGER.trace(
+				"deleteRow called with parameters: tableName=?, rowKey=?, user=?",
+				tableName, rowKey, user);
+		// In most instances (e.g., when reading is not necessary), the
+		// RowDeletingIterator gives better performance than the deleting
+		// mutation. This is due to the fact that Deleting mutations marks each
+		// entry with a delete marker. Using the iterator marks a whole row with
+		// a single mutation.
+		try {
+			BatchWriter writer = connector.createBatchWriter(tableName,
+					getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+			try {
+				IteratorSetting is = new IteratorSetting(
+						ROW_DELETING_ITERATOR_PRIORITY,
 						ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
-	    		connector.tableOperations().attachIterator(tableName, is);
+				connector.tableOperations().attachIterator(tableName, is);
 				Mutation mutation = new Mutation(rowKey.toString());
 				mutation.put("", "", RowDeletingIterator.DELETE_ROW_VALUE);
 				writer.flush();
 				connector.tableOperations().flush(tableName, null, null, true);
-        	} catch (AccumuloException ae) {
-                throw new RuntimeException(ae);
-            } catch (AccumuloSecurityException ase) {
-                throw new RuntimeException(ase);
-            } finally {
+			} catch (AccumuloException ae) {
+				throw new RuntimeException(ae);
+			} catch (AccumuloSecurityException ase) {
+				throw new RuntimeException(ase);
+			} finally {
 				writer.close();
-			}        
-        } catch (MutationsRejectedException mre) {
-        	throw new RuntimeException(mre);
+			}
+		} catch (MutationsRejectedException mre) {
+			throw new RuntimeException(mre);
 		} catch (TableNotFoundException tnfe) {
 			throw new RuntimeException(tnfe);
-        }
-    }
+		}
+	}
 
     @Override
     public void deleteColumn(Row<? extends RowKey> row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
