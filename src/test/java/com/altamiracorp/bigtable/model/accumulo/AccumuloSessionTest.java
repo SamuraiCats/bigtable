@@ -172,7 +172,7 @@ public class AccumuloSessionTest {
 
         when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
-        List<Row> row = accumuloSession.findByRowStartsWith(TEST_TABLE_NAME, "testRowKey", queryUser);
+        List<Row<? extends RowKey>> row = accumuloSession.findByRowStartsWith(TEST_TABLE_NAME, "testRowKey", queryUser);
         assertEquals(2, row.size());
 
         assertEquals("testRowKey1", row.get(0).getRowKey().toString());
