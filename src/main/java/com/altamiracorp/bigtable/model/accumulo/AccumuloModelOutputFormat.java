@@ -1,6 +1,8 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
 import com.altamiracorp.bigtable.model.Row;
+import com.altamiracorp.bigtable.model.RowKey;
+
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.hadoop.io.Text;
@@ -8,7 +10,7 @@ import org.apache.hadoop.mapreduce.*;
 
 import java.io.IOException;
 
-public class AccumuloModelOutputFormat extends OutputFormat<Text, Row> {
+public class AccumuloModelOutputFormat extends OutputFormat<Text, Row<? extends RowKey>> {
     private AccumuloOutputFormat accumuloOutputFormat = new AccumuloOutputFormat();
 
     public static void init(Job job, String accumuloInstanceName, String zookeeperServers, String user, String password, String tableName) {
@@ -17,7 +19,7 @@ public class AccumuloModelOutputFormat extends OutputFormat<Text, Row> {
     }
 
     @Override
-    public RecordWriter<Text, Row> getRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+    public RecordWriter<Text, Row<? extends RowKey>> getRecordWriter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
         return new RowRecordWriter(accumuloOutputFormat.getRecordWriter(taskAttemptContext));
     }
 
@@ -31,7 +33,7 @@ public class AccumuloModelOutputFormat extends OutputFormat<Text, Row> {
         return accumuloOutputFormat.getOutputCommitter(taskAttemptContext);
     }
 
-    private class RowRecordWriter extends RecordWriter<Text, Row> {
+    private class RowRecordWriter extends RecordWriter<Text, Row<? extends RowKey>> {
         private final RecordWriter<Text, Mutation> recordWriter;
 
         public RowRecordWriter(RecordWriter<Text, Mutation> recordWriter) {
@@ -39,7 +41,7 @@ public class AccumuloModelOutputFormat extends OutputFormat<Text, Row> {
         }
 
         @Override
-        public void write(Text text, Row row) throws IOException, InterruptedException {
+        public void write(Text text, Row<? extends RowKey> row) throws IOException, InterruptedException {
             Mutation mutation = AccumuloSession.createMutationFromRow(row);
             if (mutation != null) {
                 this.recordWriter.write(text, mutation);
