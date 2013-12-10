@@ -6,7 +6,7 @@ package com.altamiracorp.bigtable.model;
  * @param <TModel> model class that this builder will create from a Row
  */
 public abstract class BaseBuilder<TModel> {
-    public abstract TModel fromRow(Row row);
+    public abstract TModel fromRow(Row<? extends RowKey> row);
 
     public abstract String getTableName();
 

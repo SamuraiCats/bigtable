@@ -28,7 +28,8 @@ public class Row<TRowKey extends RowKey> {
         this.columnFamilies.put(columnFamily.getColumnFamilyName(), columnFamily);
     }
 
-    public <T extends ColumnFamily> T get(String columnFamilyName) {
+    @SuppressWarnings("unchecked")
+	public <T extends ColumnFamily> T get(String columnFamilyName) {
         return (T) this.columnFamilies.get(columnFamilyName);
     }
 
