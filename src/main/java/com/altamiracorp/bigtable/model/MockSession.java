@@ -10,7 +10,7 @@ public class MockSession extends ModelSession {
     public HashMap<String, List<Row<? extends RowKey>>> tables = new HashMap<String, List<Row<? extends RowKey>>>();
 
     @Override
-    public void init(Map<String, String> properties) {
+    public void init(Map<String, Object> properties) {
     }
 
     @Override

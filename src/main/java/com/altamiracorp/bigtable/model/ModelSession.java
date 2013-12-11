@@ -8,7 +8,7 @@ import com.altamiracorp.bigtable.model.user.ModelUserContext;
 
 public abstract class ModelSession {
 
-    public abstract void init(Map<String, String> properties);
+    public abstract void init(Map<String, Object> properties);
 
     /**
      * Save a row
