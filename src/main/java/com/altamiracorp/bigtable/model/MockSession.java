@@ -7,15 +7,15 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class MockSession extends ModelSession {
-    public HashMap<String, List<Row<? extends RowKey>>> tables = new HashMap<String, List<Row<? extends RowKey>>>();
+    public HashMap<String, List<Row>> tables = new HashMap<String, List<Row>>();
 
     @Override
     public void init(Map<String, Object> properties) {
     }
 
     @Override
-    public void save(Row<? extends RowKey> row, ModelUserContext user) {
-        List<Row<? extends RowKey>> table = tables.get(row.getTableName());
+    public void save(Row row, ModelUserContext user) {
+        List<Row> table = tables.get(row.getTableName());
         if (table == null) {
             throw new NullPointerException("Could not find table with name: " + row.getTableName());
         }
@@ -23,17 +23,17 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void saveMany(String tableName, Collection<Row<? extends RowKey>> rows, ModelUserContext user) {
-        for (Row<? extends RowKey> r : rows) {
+    public void saveMany(String tableName, Collection<Row> rows, ModelUserContext user) {
+        for (Row r : rows) {
             save(r, user);
         }
     }
 
     @Override
-    public List<Row<? extends RowKey>> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user) {
-        List<Row<? extends RowKey>> rows = this.tables.get(tableName);
-        ArrayList<Row<? extends RowKey>> results = new ArrayList<Row<? extends RowKey>>();
-        for (Row<? extends RowKey> row : rows) {
+    public List<Row> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user) {
+        List<Row> rows = this.tables.get(tableName);
+        ArrayList<Row> results = new ArrayList<Row>();
+        for (Row row : rows) {
             String rowKey = row.getRowKey().toString();
             if (rowKey.compareTo(keyStart) >= 0 && rowKey.compareTo(keyEnd) < 0) {
                 results.add(row);
@@ -44,10 +44,10 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public List<Row<? extends RowKey>> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
-        List<Row<? extends RowKey>> rows = this.tables.get(tableName);
-        ArrayList<Row<? extends RowKey>> results = new ArrayList<Row<? extends RowKey>>();
-        for (Row<? extends RowKey> row : rows) {
+    public List<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
+        List<Row> rows = this.tables.get(tableName);
+        ArrayList<Row> results = new ArrayList<Row>();
+        for (Row row : rows) {
             String rowKey = row.getRowKey().toString();
             if (rowKey.startsWith(rowKeyPrefix)) {
                 results.add(row);
@@ -58,14 +58,14 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public List<Row<? extends RowKey>> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
-        List<Row<? extends RowKey>> rows = this.tables.get(tableName);
+    public List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
+        List<Row> rows = this.tables.get(tableName);
         if (rows == null) {
             throw new RuntimeException("Unable to find table " + tableName + ". Did you remember to call initializeTable() in Session.initialieTables()?");
         }
 
-        List<Row<? extends RowKey>> result = new ArrayList<Row<? extends RowKey>>();
-        for (Row<? extends RowKey> row : rows) {
+        List<Row> result = new ArrayList<Row>();
+        for (Row row : rows) {
             if (!Pattern.matches(rowKeyRegex, row.getRowKey().toString())) {
                 result.add(row);
             }
@@ -74,12 +74,12 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public Row<? extends RowKey> findByRowKey(String tableName, String rowKey, ModelUserContext user) {
-        List<Row<? extends RowKey>> rows = this.tables.get(tableName);
+    public Row findByRowKey(String tableName, String rowKey, ModelUserContext user) {
+        List<Row> rows = this.tables.get(tableName);
         if (rows == null) {
             throw new RuntimeException("Unable to find table " + tableName + ". Did you remember to call initializeTable() in Session.initialieTables()?");
         }
-        for (Row<? extends RowKey> row : rows) {
+        for (Row row : rows) {
             if (row.getRowKey().toString().equals(rowKey)) {
                 return row;
             }
@@ -88,13 +88,13 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public Row<? extends RowKey> findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user) {
+    public Row findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user) {
         return findByRowKey(tableName, rowKey, user);
     }
 
     @Override
     public void initializeTable(String tableName, ModelUserContext user) {
-        this.tables.put(tableName, new ArrayList<Row<? extends RowKey>>());
+        this.tables.put(tableName, new ArrayList<Row>());
     }
 
     @Override
@@ -105,7 +105,7 @@ public class MockSession extends ModelSession {
     @Override
     public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
         String rowKeyStr = rowKey.toString();
-        List<Row<? extends RowKey>> rows = this.tables.get(tableName);
+        List<Row> rows = this.tables.get(tableName);
         for (int i = 0; i < rows.size(); i++) {
             if (rowKeyStr.equals(rows.get(i).getRowKey().toString())) {
                 rows.remove(i);
@@ -114,7 +114,7 @@ public class MockSession extends ModelSession {
         }
     }
 
-    public void deleteColumn(Row<? extends RowKey> row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
+    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
         List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
         for (int i = 0; i < columnFamilies.size(); i++) {
             if (columnFamilies.get(i).getColumnFamilyName().equals(columnFamily)) {

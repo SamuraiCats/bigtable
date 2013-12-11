@@ -15,7 +15,7 @@ public abstract class ModelSession {
      * @param row
      * @param user
      */
-    public abstract void save(Row<? extends RowKey> row, ModelUserContext user);
+    public abstract void save(Row row, ModelUserContext user);
 
     /**
      * Save a collection of rows
@@ -23,7 +23,7 @@ public abstract class ModelSession {
      * @param rows
      * @param user
      */
-    public abstract void saveMany(String tableName, Collection<Row<? extends RowKey>> rows, ModelUserContext user);
+    public abstract void saveMany(String tableName, Collection<Row> rows, ModelUserContext user);
 
     /**
      * Find rows in a range of specified row keys
@@ -33,7 +33,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract List<Row<? extends RowKey>> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user);
+    public abstract List<Row> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user);
 
     /**
      * Find rows based on the prefix of the row keys
@@ -42,7 +42,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract List<Row<? extends RowKey>> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user);
+    public abstract List<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user);
 
     /**
      * Find rows with the group of row keys that match the provided regular expression
@@ -51,7 +51,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract List<Row<? extends RowKey>> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user);
+    public abstract List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user);
 
     /**
      * Returns an entire row with the specified row key
@@ -60,7 +60,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract Row<? extends RowKey> findByRowKey(String tableName, String rowKey, ModelUserContext user);
+    public abstract Row findByRowKey(String tableName, String rowKey, ModelUserContext user);
 
     /**
      * Returns a row, with only the columns specified, with the specified row key
@@ -70,7 +70,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract Row<? extends RowKey> findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user);
+    public abstract Row findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user);
 
     /**
      * Initialize a table
@@ -102,7 +102,7 @@ public abstract class ModelSession {
      * @param columnQualifier
      * @param user
      */
-    public abstract void deleteColumn(Row<? extends RowKey> row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user);
+    public abstract void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user);
 
     /**
      * Returns the full list of tables in the provider data store
