@@ -2,8 +2,6 @@ package com.altamiracorp.bigtable.model.accumulo;
 
 import com.altamiracorp.bigtable.model.BaseBuilder;
 import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.RowKey;
-
 import org.apache.accumulo.core.client.RowIterator;
 import org.apache.accumulo.core.client.mapreduce.InputFormatBase;
 import org.apache.accumulo.core.data.Key;
@@ -17,7 +15,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.util.Map;
 
-public abstract class AccumuloBaseInputFormat<TModel extends Row<? extends RowKey>, TRepo extends BaseBuilder<TModel>> extends InputFormatBase<Text, TModel> {
+public abstract class AccumuloBaseInputFormat<TModel extends Row, TRepo extends BaseBuilder<TModel>> extends InputFormatBase<Text, TModel> {
 
     public abstract TRepo getBuilder();
 

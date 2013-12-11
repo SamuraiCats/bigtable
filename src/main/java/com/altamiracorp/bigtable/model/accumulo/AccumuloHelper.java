@@ -16,7 +16,7 @@ import org.apache.accumulo.core.util.PeekingIterator;
 import java.util.*;
 
 public class AccumuloHelper {
-    public static boolean addRowToWriter(BatchWriter writer, Row<? extends RowKey> row) throws MutationsRejectedException {
+    public static boolean addRowToWriter(BatchWriter writer, Row row) throws MutationsRejectedException {
         if (row == null) {
             throw new NullPointerException("row cannot be null");
         }
@@ -71,8 +71,8 @@ public class AccumuloHelper {
         }
     }
 
-    public static List<Row<? extends RowKey>> scannerToRows(String tableName, ScannerBase scanner) {
-        ArrayList<Row<? extends RowKey>> rows = new ArrayList<Row<? extends RowKey>>();
+    public static List<Row> scannerToRows(String tableName, ScannerBase scanner) {
+        ArrayList<Row> rows = new ArrayList<Row>();
         RowIterator rowIterator = new RowIterator(scanner);
         while (rowIterator.hasNext()) {
             Iterator<Map.Entry<Key, Value>> row = rowIterator.next();
@@ -126,7 +126,7 @@ public class AccumuloHelper {
         return colFam;
     }
 
-    public static Row<? extends RowKey> accumuloRowToRow(String tableName, Iterator<Map.Entry<Key, Value>> accumuloRow) {
+    public static Row accumuloRowToRow(String tableName, Iterator<Map.Entry<Key, Value>> accumuloRow) {
         Row<RowKey> row = null;
         while (accumuloRow.hasNext()) {
             Map.Entry<Key, Value> accumuloColumn = accumuloRow.next();

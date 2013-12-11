@@ -41,7 +41,7 @@ public class AccumuloColumnTest {
         authInfo.setPassword("testPassword".getBytes());
         connector = (MockConnector) mockInstance.getConnector(authInfo);
 
-        adminUser = new AccumuloUserContext(new Authorizations("A","B"));
+        adminUser = new AccumuloUserContext(new Authorizations("A", "B"));
         queryUser = new AccumuloUserContext(new Authorizations("B"));
 
         accumuloSession = new AccumuloSession(connector);
@@ -49,21 +49,21 @@ public class AccumuloColumnTest {
     }
 
     @Test
-    public void testColumnVisibility () {
-        Row<? extends RowKey> row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+    public void testColumnVisibility() {
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
         ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
-        columnFamily.set("testColumn1","testValue1");
-        columnFamily.addColumn(new AccumuloColumn("testColumn2",new Value("testValue2"), new ColumnVisibility("A|B")));
-        columnFamily.addColumn(new AccumuloColumn("testColumn3",new Value("testValue3"), new ColumnVisibility("A")));
+        columnFamily.set("testColumn1", "testValue1");
+        columnFamily.addColumn(new AccumuloColumn("testColumn2", new Value("testValue2"), new ColumnVisibility("A|B")));
+        columnFamily.addColumn(new AccumuloColumn("testColumn3", new Value("testValue3"), new ColumnVisibility("A")));
         row.addColumnFamily(columnFamily);
 
         accumuloSession.save(row, adminUser);
 
-        Row<? extends RowKey> adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
+        Row adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
         ColumnFamily adminQueryColumnFamily = adminQueryRow.get("testColumnFamily1");
         assertEquals(3, adminQueryColumnFamily.getColumns().size());
 
-        Row<? extends RowKey> staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
+        Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
         assertEquals(2, staffQueryColumnFamily.getColumns().size());
     }
