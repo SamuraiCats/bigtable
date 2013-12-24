@@ -229,7 +229,9 @@ public class AccumuloSession extends ModelSession {
                 IteratorSetting is = new IteratorSetting(
                         ROW_DELETING_ITERATOR_PRIORITY,
                         ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
-                connector.tableOperations().attachIterator(tableName, is);
+                if (!connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
+                    connector.tableOperations().attachIterator(tableName, is);
+                }
                 Mutation mutation = new Mutation(rowKey.toString());
                 mutation.put("", "", RowDeletingIterator.DELETE_ROW_VALUE);
                 writer.flush();
