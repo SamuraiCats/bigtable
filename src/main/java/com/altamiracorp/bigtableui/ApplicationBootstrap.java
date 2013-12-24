@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,6 +72,9 @@ public class ApplicationBootstrap extends AbstractModule implements ServletConte
 
     private Map loadModelProperties() {
         String fileName = getModelPropertiesFileName();
+        if (! new File(fileName).isFile()) {
+            fileName = "/opt/bigtable-ui/config/model.config";
+        }
         try {
             Properties properties = new Properties();
             InputStream in = new FileInputStream(fileName);

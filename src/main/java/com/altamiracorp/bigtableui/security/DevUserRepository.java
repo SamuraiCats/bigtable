@@ -6,6 +6,7 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +20,9 @@ public class DevUserRepository extends UserRepository {
     public DevUserRepository() throws IOException {
         usersConfig = new Properties();
         String fileName = "./users.config";
+        if (! new File(fileName).isFile()) {
+            fileName = "/opt/bigtable-ui/config/users.config";
+        }
         InputStream in = new FileInputStream(fileName);
         try {
             usersConfig.load(in);
