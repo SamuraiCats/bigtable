@@ -217,36 +217,21 @@ public class AccumuloSession extends ModelSession {
         LOGGER.trace(
                 "deleteRow called with parameters: tableName=?, rowKey=?, user=?",
                 tableName, rowKey, user);
-        // In most instances (e.g., when reading is not necessary), the
-        // RowDeletingIterator gives better performance than the deleting
-        // mutation. This is due to the fact that Deleting mutations marks each
-        // entry with a delete marker. Using the iterator marks a whole row with
-        // a single mutation.
         try {
-            BatchWriter writer = connector.createBatchWriter(tableName,
-                    getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
-            try {
-                IteratorSetting is = new IteratorSetting(
-                        ROW_DELETING_ITERATOR_PRIORITY,
-                        ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
-                if (!connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
-                    connector.tableOperations().attachIterator(tableName, is);
-                }
-                Mutation mutation = new Mutation(rowKey.toString());
-                mutation.put("", "", RowDeletingIterator.DELETE_ROW_VALUE);
-                writer.flush();
-                connector.tableOperations().flush(tableName, null, null, true);
-            } catch (AccumuloException ae) {
-                throw new RuntimeException(ae);
-            } catch (AccumuloSecurityException ase) {
-                throw new RuntimeException(ase);
-            } finally {
-                writer.close();
-            }
-        } catch (MutationsRejectedException mre) {
-            throw new RuntimeException(mre);
-        } catch (TableNotFoundException tnfe) {
-            throw new RuntimeException(tnfe);
+            // TODO: Find a better way to delete a single row given the row key
+            String strRowKey = rowKey.toString();
+            char lastChar = strRowKey.charAt(strRowKey.length() - 1);
+            char asciiCharBeforeLastChar = (char) (((int) lastChar) - 1);
+            String precedingRowKey = strRowKey.substring(0, strRowKey.length() - 1) + asciiCharBeforeLastChar;
+            Text startRowKey = new Text(precedingRowKey);
+            Text endRowKey = new Text(strRowKey);
+            connector.tableOperations().deleteRows(tableName, startRowKey, endRowKey);
+        } catch (AccumuloException e) {
+            throw new RuntimeException(e);
+        } catch (AccumuloSecurityException e) {
+            throw new RuntimeException(e);
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
