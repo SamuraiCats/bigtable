@@ -8,6 +8,12 @@
     <artifactId>bigtable-ui</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <scm>
+        <url>https://github.com/altamiracorp/bigtable-ui</url>
+        <connection>scm:git:git://github.com/altamiracorp/bigtable-ui.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/altamiracorp/bigtable-ui.git</developerConnection>
+    </scm>
+
     <distributionManagement>
         <repository>
             <id>bits.lumify.io</id>
@@ -20,6 +26,8 @@
         <zookeeper-version>3.4.5</zookeeper-version>
         <accumulo-version>1.5.0</accumulo-version>
         <hadoop-version>2.0.0-mr1-cdh4.4.0</hadoop-version>
+        <plugin.buildnumber.version>1.2</plugin.buildnumber.version>
+        <plugin.maven.war.version>2.3</plugin.maven.war.version>
         <internal.project.repo>http://63.141.238.205:8081/maven/</internal.project.repo>
     </properties>
 
@@ -199,6 +207,56 @@
                 </executions>
                 <configuration>
                     <mainClass>com.altamiracorp.bigtableui.Server</mainClass>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>${plugin.buildnumber.version}</version>
+                <executions>
+                    <execution>
+                        <id>create-build-number</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>create-formatted-timestamp</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create-timestamp</goal>
+                        </goals>
+                        <configuration>
+                            <timestampFormat>EEEE, MMMM dd, yyyy HH:mm:ss.sss zzz</timestampFormat>
+                            <timestampPropertyName>build.timestamp.formatted</timestampPropertyName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>${plugin.maven.war.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Built-On>${build.timestamp.formatted}</Built-On>
+                            <Built-On-Unix>${timestamp}</Built-On-Unix>
+                            <Git-Revision>${buildNumber}</Git-Revision>
+                        </manifestEntries>
+                    </archive>
+                    <webResources>
+                        <webResource>
+                            <directory>${basedir}/src/main/webapp</directory>
+                            <filtering>true</filtering>
+                        </webResource>
+                    </webResources>
                 </configuration>
             </plugin>
         </plugins>
