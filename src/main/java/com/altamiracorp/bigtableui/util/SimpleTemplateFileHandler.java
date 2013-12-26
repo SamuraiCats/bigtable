@@ -19,6 +19,7 @@ public class SimpleTemplateFileHandler implements Handler {
 
         contents = contents.replaceAll("\\$\\{context.url}", baseURL + request.getServletContext().getContextPath());
 
+        response.setContentType("text/html");
         response.getOutputStream().write(contents.getBytes());
     }
 }
