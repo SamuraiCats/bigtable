@@ -13,8 +13,8 @@ $(function () {
 });
 
 function loadUser() {
-    $.get('/user', function (json) {
-        console.log('/user', json);
+    $.get('user', function (json) {
+        console.log('user', json);
         $('.user-dropdown .logged-in').show();
         $('.user-dropdown .logged-out').hide();
         $('#user-name').text(json.username);
@@ -28,7 +28,7 @@ function loadUser() {
 
 function loadTableList() {
     $.get('table', function (json) {
-        console.log('/table', json);
+        console.log('table', json);
         var html = tablesTemplate.render(json);
         $('#main-pane').html(html);
     })

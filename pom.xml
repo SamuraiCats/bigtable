@@ -28,13 +28,12 @@
         <hadoop-version>2.0.0-mr1-cdh4.4.0</hadoop-version>
         <plugin.buildnumber.version>1.2</plugin.buildnumber.version>
         <plugin.maven.war.version>2.3</plugin.maven.war.version>
-        <internal.project.repo>http://63.141.238.205:8081/maven/</internal.project.repo>
     </properties>
 
     <repositories>
         <repository>
             <id>ext-releases</id>
-            <url>${internal.project.repo}</url>
+            <url>http://bits.lumify.io/m2/</url>
         </repository>
         <repository>
             <snapshots>
@@ -42,7 +41,7 @@
                 <updatePolicy>always</updatePolicy>
             </snapshots>
             <id>ext-snapshots</id>
-            <url>${internal.project.repo}</url>
+            <url>http://bits.lumify.io/m2/</url>
         </repository>
         <repository>
             <id>com.cloudera</id>
