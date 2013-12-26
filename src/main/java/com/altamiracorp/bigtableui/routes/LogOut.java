@@ -18,6 +18,6 @@ public class LogOut extends BaseRequestHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, HandlerChain chain) throws Exception {
         authenticationProvider.logOut(request, response);
-        response.sendRedirect("/");
+        response.sendRedirect(response.encodeRedirectURL(request.getContextPath() + "/"));
     }
 }

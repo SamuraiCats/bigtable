@@ -26,6 +26,6 @@ public class LogIn extends BaseRequestHandler {
 
         User user = this.userRepository.validateUser(username, password);
         authenticationProvider.setUser(request, user);
-        response.sendRedirect("/");
+        response.sendRedirect(response.encodeRedirectURL(request.getContextPath() + "/"));
     }
 }
