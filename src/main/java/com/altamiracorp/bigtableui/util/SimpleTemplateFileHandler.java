@@ -18,7 +18,7 @@ public class SimpleTemplateFileHandler implements Handler {
         int slashIndex = url.indexOf('/', "https://".length() + 1);
         String baseUrl = url.substring(0, slashIndex);
 
-        contents = contents.replaceAll("\\$\\{context.url}", baseUrl + request.getServletContext().getContextPath());
+        contents = contents.replaceAll("\\$\\{context.url}", baseUrl + request.getServletContext().getContextPath() + "/");
 
         response.setContentType("text/html");
         response.getOutputStream().write(contents.getBytes());
