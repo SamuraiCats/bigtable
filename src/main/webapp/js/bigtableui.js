@@ -39,29 +39,33 @@ function loadTableList() {
 
 function loadTable(tableName) {
     var html = tableTemplate.render({ name: tableName });
-    $('#main-pane').html(html);
-    $('#main-pane .query button.query').click(onQueryTable.bind(null, tableName));
+    $('#main-pane')
+        .html(html)
+        .on('click', 'button.query', onQueryTable.bind(null, tableName));
 }
 
-function onQueryTable(tableName) {
+function onQueryTable(tableName, event) {
+    event.preventDefault();
+
     $('#main-pane .query-results').html("Loading...");
     var getData = {
         start: $('#main-pane .query .query-start').val(),
         end: $('#main-pane .query .query-end').val()
     };
     console.log('query', getData);
-    $.get('table/' + tableName, getData, function (json) {
-        console.log(json);
-        json.columnToHtml = function (column) {
-            column.bytesToLong = bytesToLong;
-            column.bytesToDouble = bytesToDouble;
-            column.bytesToString = bytesToString;
-            return queryResultsColumnTemplate.render(column);
-        };
-        json.bytesToString = bytesToString;
-        var html = queryResultsTemplate.render(json);
-        $('#main-pane .query-results').html(html);
-    });
+    $.getJSON('table/' + tableName, getData)
+        .done(function (json) {
+            console.log(json);
+            json.columnToHtml = function (column) {
+                column.bytesToLong = bytesToLong;
+                column.bytesToDouble = bytesToDouble;
+                column.bytesToString = bytesToString;
+                return queryResultsColumnTemplate.render(column);
+            };
+            json.bytesToString = bytesToString;
+            var html = queryResultsTemplate.render(json);
+            $('#main-pane .query-results').html(html);
+        });
 }
 
 function onNavigate() {
