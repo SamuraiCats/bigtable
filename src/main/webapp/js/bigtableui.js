@@ -1,10 +1,10 @@
 'use strict';
 
-var tableTemplate = new EJS({url: '/templates/table.ejs'});
-var tablesTemplate = new EJS({url: '/templates/tables.ejs'});
-var notFoundTemplate = new EJS({url: '/templates/notFound.ejs'});
-var queryResultsTemplate = new EJS({url: '/templates/queryResults.ejs'});
-var queryResultsColumnTemplate = new EJS({url: '/templates/queryResultsColumn.ejs'});
+var tableTemplate = new EJS({url: 'templates/table.ejs'});
+var tablesTemplate = new EJS({url: 'templates/tables.ejs'});
+var notFoundTemplate = new EJS({url: 'templates/notFound.ejs'});
+var queryResultsTemplate = new EJS({url: 'templates/queryResults.ejs'});
+var queryResultsColumnTemplate = new EJS({url: 'templates/queryResultsColumn.ejs'});
 
 $(function () {
     loadUser();
@@ -27,7 +27,7 @@ function loadUser() {
 }
 
 function loadTableList() {
-    $.get('/table', function (json) {
+    $.get('table', function (json) {
         console.log('/table', json);
         var html = tablesTemplate.render(json);
         $('#main-pane').html(html);
@@ -50,7 +50,7 @@ function onQueryTable(tableName) {
         end: $('#main-pane .query .query-end').val()
     };
     console.log('query', getData);
-    $.get('/table/' + tableName, getData, function (json) {
+    $.get('table/' + tableName, getData, function (json) {
         console.log(json);
         json.columnToHtml = function (column) {
             column.bytesToLong = bytesToLong;
