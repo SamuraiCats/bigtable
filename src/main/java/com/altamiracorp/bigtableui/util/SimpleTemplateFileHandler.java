@@ -15,9 +15,10 @@ public class SimpleTemplateFileHandler implements Handler {
         String contents = FileUtils.readFileToString(new File(path));
 
         String url = request.getRequestURL().toString();
-        String baseURL = url.substring(0, url.length() - request.getRequestURI().length()) + request.getContextPath() + "/";
+        int slashIndex = url.indexOf('/', "https://".length() + 1);
+        String baseUrl = url.substring(0, slashIndex);
 
-        contents = contents.replaceAll("\\$\\{context.url}", baseURL + request.getServletContext().getContextPath());
+        contents = contents.replaceAll("\\$\\{context.url}", baseUrl + request.getServletContext().getContextPath());
 
         response.setContentType("text/html");
         response.getOutputStream().write(contents.getBytes());
