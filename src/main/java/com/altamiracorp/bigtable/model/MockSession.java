@@ -74,6 +74,11 @@ public class MockSession extends ModelSession {
     }
 
     @Override
+    public Iterable<Row> findAll(String tableName, ModelUserContext user) {
+        return this.tables.get(tableName);
+    }
+
+    @Override
     public Row findByRowKey(String tableName, String rowKey, ModelUserContext user) {
         List<Row> rows = this.tables.get(tableName);
         if (rows == null) {

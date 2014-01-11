@@ -1,10 +1,10 @@
 package com.altamiracorp.bigtable.model;
 
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
 
 public abstract class ModelSession {
 
@@ -12,6 +12,7 @@ public abstract class ModelSession {
 
     /**
      * Save a row
+     *
      * @param row
      * @param user
      */
@@ -19,6 +20,7 @@ public abstract class ModelSession {
 
     /**
      * Save a collection of rows
+     *
      * @param tableName
      * @param rows
      * @param user
@@ -27,6 +29,7 @@ public abstract class ModelSession {
 
     /**
      * Find rows in a range of specified row keys
+     *
      * @param tableName
      * @param keyStart
      * @param keyEnd
@@ -37,6 +40,7 @@ public abstract class ModelSession {
 
     /**
      * Find rows based on the prefix of the row keys
+     *
      * @param tableName
      * @param rowKeyPrefix
      * @param user
@@ -46,6 +50,7 @@ public abstract class ModelSession {
 
     /**
      * Find rows with the group of row keys that match the provided regular expression
+     *
      * @param tableName
      * @param rowKeyRegex
      * @param user
@@ -53,8 +58,11 @@ public abstract class ModelSession {
      */
     public abstract List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user);
 
+    public abstract Iterable<Row> findAll(String tableName, ModelUserContext user);
+
     /**
      * Returns an entire row with the specified row key
+     *
      * @param tableName
      * @param rowKey
      * @param user
@@ -64,6 +72,7 @@ public abstract class ModelSession {
 
     /**
      * Returns a row, with only the columns specified, with the specified row key
+     *
      * @param tableName
      * @param rowKey
      * @param columnsToReturn
@@ -74,6 +83,7 @@ public abstract class ModelSession {
 
     /**
      * Initialize a table
+     *
      * @param tableName
      * @param user
      */
@@ -81,6 +91,7 @@ public abstract class ModelSession {
 
     /**
      * Delete a table
+     *
      * @param tableName
      * @param user
      */
@@ -88,6 +99,7 @@ public abstract class ModelSession {
 
     /**
      * Delete a row with the specified row key
+     *
      * @param tableName
      * @param rowKey
      * @param user
@@ -96,6 +108,7 @@ public abstract class ModelSession {
 
     /**
      * Delete a specific column on the provided row
+     *
      * @param row
      * @param tableName
      * @param columnFamily
