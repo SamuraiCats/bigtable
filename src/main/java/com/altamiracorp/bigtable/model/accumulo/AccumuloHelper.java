@@ -81,6 +81,31 @@ public class AccumuloHelper {
         return rows;
     }
 
+    public static Iterable<Row> scannerToRowsIterable(final String tableName, final ScannerBase scanner) {
+        return new Iterable<Row>() {
+            @Override
+            public Iterator<Row> iterator() {
+                final RowIterator rowIterator = new RowIterator(scanner);
+                return new Iterator<Row>() {
+                    @Override
+                    public boolean hasNext() {
+                        return rowIterator.hasNext();
+                    }
+
+                    @Override
+                    public Row next() {
+                        Iterator<Map.Entry<Key, Value>> row = rowIterator.next();
+                        return accumuloRowToRow(tableName, row);
+                    }
+
+                    @Override
+                    public void remove() {
+                        rowIterator.remove();
+                    }
+                };
+            }
+        };
+    }
 
     public static List<ColumnFamily> scannerToColumnFamiliesFilteredByRegex(Scanner scanner,
                                                                             long colFamOffset, long colFamLimit, String colFamRegex) {
@@ -113,15 +138,11 @@ public class AccumuloHelper {
         String colFamName = iterator.peek().getKey().getColumnFamily().toString();
         AccumuloColumnFamily colFam = new AccumuloColumnFamily(colFamName);
 
-        System.out.println(colFamName);
-
         while (iterator.peek() != null && iterator.peek().getKey().getColumnFamily().toString().equals(colFamName)) {
             System.out.println(iterator.peek());
             Map.Entry<Key, Value> next = iterator.next();
             colFam.addColumn(new AccumuloColumn(next.getKey().getColumnQualifier().toString(), next.getValue().toString(), new ColumnVisibility(next.getKey().getColumnVisibility())));
         }
-
-        System.out.println();
 
         return colFam;
     }

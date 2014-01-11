@@ -8,7 +8,6 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
-import org.apache.accumulo.core.iterators.user.RowDeletingIterator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
@@ -128,6 +127,17 @@ public class AccumuloSession extends ModelSession {
             scanner.addScanIterator(iter);
 
             return AccumuloHelper.scannerToRows(tableName, scanner);
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Iterable<Row> findAll(String tableName, ModelUserContext user) {
+        LOGGER.trace("findAll called with parameters: tableName=?, user=?", tableName, user);
+        try {
+            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            return AccumuloHelper.scannerToRowsIterable(tableName, scanner);
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
         }
