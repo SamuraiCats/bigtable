@@ -25,8 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 
@@ -229,5 +228,23 @@ public class AccumuloSessionTest {
         Row row1 = rows.get(0);
         assertEquals("testRowKey1", row1.getRowKey().toString());
         assertEquals("testValue1", row1.get("testColumnFamily1").get("testColumn1").toString());
+    }
+
+    @Test
+    public void testDeleteRow() throws TableNotFoundException {
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        ColumnFamily columnFamily1 = new ColumnFamily("testColumnFamily1");
+        columnFamily1.set("1testColumn1", "1testColumn1Value");
+        row.addColumnFamily(columnFamily1);
+
+        accumuloSession.save(row, queryUser);
+
+        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", this.queryUser);
+        assertNotNull("row should exist", row);
+
+        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"), this.queryUser);
+
+        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", this.queryUser);
+        assertNull("row should be deleted", row);
     }
 }
