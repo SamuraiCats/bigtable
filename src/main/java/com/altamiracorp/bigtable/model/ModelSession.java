@@ -60,6 +60,8 @@ public abstract class ModelSession {
 
     public abstract Iterable<Row> findAll(String tableName, ModelUserContext user);
 
+    public abstract long rowCount(String tableName, ModelUserContext user);
+
     /**
      * Returns an entire row with the specified row key
      *

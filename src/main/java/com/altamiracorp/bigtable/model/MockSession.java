@@ -79,6 +79,15 @@ public class MockSession extends ModelSession {
     }
 
     @Override
+    public long rowCount(String tableName, ModelUserContext user) {
+        List<Row> rows = this.tables.get(tableName);
+        if (rows == null) {
+            throw new RuntimeException("Unable to find table " + tableName + ". Did you remember to call initializeTable() in Session.initialieTables()?");
+        }
+        return rows.size();
+    }
+
+    @Override
     public Row findByRowKey(String tableName, String rowKey, ModelUserContext user) {
         List<Row> rows = this.tables.get(tableName);
         if (rows == null) {
