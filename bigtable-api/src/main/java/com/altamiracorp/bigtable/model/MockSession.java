@@ -30,7 +30,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public List<Row> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user) {
+    public Iterable<Row> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user) {
         List<Row> rows = this.tables.get(tableName);
         ArrayList<Row> results = new ArrayList<Row>();
         for (Row row : rows) {
@@ -44,7 +44,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public List<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
+    public Iterable<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
         List<Row> rows = this.tables.get(tableName);
         ArrayList<Row> results = new ArrayList<Row>();
         for (Row row : rows) {
@@ -58,7 +58,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
+    public Iterable<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
         List<Row> rows = this.tables.get(tableName);
         if (rows == null) {
             throw new RuntimeException("Unable to find table " + tableName + ". Did you remember to call initializeTable() in Session.initialieTables()?");

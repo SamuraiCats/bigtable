@@ -50,13 +50,13 @@ public class Query extends BaseRequestHandler {
         JSONObject json = new JSONObject();
         json.put("tableName", tableName);
 
-        List<Row> rows = this.bigTableRepository.query(tableName, start, end, user.getModelUserContext());
+        Iterable<Row> rows = this.bigTableRepository.query(tableName, start, end, user.getModelUserContext());
         json.put("rows", rowsToJson(rows));
 
         respondWithJson(response, json);
     }
 
-    private JSONArray rowsToJson(List<Row> rows) {
+    private JSONArray rowsToJson(Iterable<Row> rows) {
         JSONArray result = new JSONArray();
         for (Row row : rows) {
             result.put(rowToJson(row));

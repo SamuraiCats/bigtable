@@ -71,17 +71,7 @@ public class AccumuloHelper {
         }
     }
 
-    public static List<Row> scannerToRows(String tableName, ScannerBase scanner) {
-        ArrayList<Row> rows = new ArrayList<Row>();
-        RowIterator rowIterator = new RowIterator(scanner);
-        while (rowIterator.hasNext()) {
-            Iterator<Map.Entry<Key, Value>> row = rowIterator.next();
-            rows.add(accumuloRowToRow(tableName, row));
-        }
-        return rows;
-    }
-
-    public static Iterable<Row> scannerToRowsIterable(final String tableName, final ScannerBase scanner) {
+    public static Iterable<Row> scannerToRows(final String tableName, final ScannerBase scanner) {
         return new Iterable<Row>() {
             @Override
             public Iterator<Row> iterator() {

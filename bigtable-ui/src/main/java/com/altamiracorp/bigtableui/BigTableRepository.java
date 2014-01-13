@@ -31,7 +31,7 @@ public class BigTableRepository {
         return results;
     }
 
-    public List<Row> query(String tableName, String start, String end, ModelUserContext user) {
+    public Iterable<Row> query(String tableName, String start, String end, ModelUserContext user) {
         LOGGER.info("query [tableName: " + tableName + ", start: " + start + ", end: " + end + "]");
         return modelSession.findByRowKeyRange(tableName, start, end, user);
     }

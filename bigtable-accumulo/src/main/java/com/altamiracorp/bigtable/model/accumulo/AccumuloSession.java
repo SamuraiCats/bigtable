@@ -4,6 +4,7 @@ import com.altamiracorp.bigtable.model.*;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -13,10 +14,7 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -97,7 +95,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public List<Row> findByRowKeyRange(String tableName, String rowKeyStart, String rowKeyEnd, ModelUserContext user) {
+    public Iterable<Row> findByRowKeyRange(String tableName, String rowKeyStart, String rowKeyEnd, ModelUserContext user) {
         LOGGER.trace("findByRowKeyRange called with parameters: tableName=?, rowKeyStart=?, rowKeyEnd=?, user=?", tableName, rowKeyStart, rowKeyEnd, user);
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
@@ -111,12 +109,12 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public List<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
+    public Iterable<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
         return findByRowKeyRange(tableName, rowKeyPrefix, rowKeyPrefix + "ZZZZ", user); // TODO is this the best way?
     }
 
     @Override
-    public List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
+    public Iterable<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
         LOGGER.trace("findByRowKeyRegex called with parameters: tableName=?, rowKeyRegex=?, user=?", tableName, rowKeyRegex, user);
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
@@ -137,7 +135,7 @@ public class AccumuloSession extends ModelSession {
         LOGGER.trace("findAll called with parameters: tableName=?, user=?", tableName, user);
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
-            return AccumuloHelper.scannerToRowsIterable(tableName, scanner);
+            return AccumuloHelper.scannerToRows(tableName, scanner);
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -167,14 +165,15 @@ public class AccumuloSession extends ModelSession {
         try {
             Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
             scanner.setRange(new Range(rowKey));
-            List<Row> rows = AccumuloHelper.scannerToRows(tableName, scanner);
-            if (rows.size() == 0) {
+            Iterator<Row> rows = AccumuloHelper.scannerToRows(tableName, scanner).iterator();
+            if (!rows.hasNext()) {
                 return null;
             }
-            if (rows.size() > 1) {
-                throw new RuntimeException("Too many rows returned for a single row query (rowKey: " + rowKey + ", size: " + rows.size() + ")");
+            Row result = rows.next();
+            if (rows.hasNext()) {
+                throw new RuntimeException("Too many rows returned for a single row query (rowKey: " + rowKey + ")");
             }
-            return rows.get(0);
+            return result;
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -193,14 +192,15 @@ public class AccumuloSession extends ModelSession {
                     scanner.fetchColumn(new Text(columnFamilyAndColumnQualifier.getKey()), new Text(columnFamilyAndColumnQualifier.getValue()));
                 }
             }
-            List<Row> rows = AccumuloHelper.scannerToRows(tableName, scanner);
-            if (rows.size() == 0) {
+            Iterator<Row> rows = AccumuloHelper.scannerToRows(tableName, scanner).iterator();
+            if (!rows.hasNext()) {
                 return null;
             }
-            if (rows.size() > 1) {
-                throw new RuntimeException("Too many rows returned for a single row query (rowKey: " + rowKey + ", size: " + rows.size() + ")");
+            Row result = rows.next();
+            if (rows.hasNext()) {
+                throw new RuntimeException("Too many rows returned for a single row query (rowKey: " + rowKey + ")");
             }
-            return rows.get(0);
+            return result;
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
         }

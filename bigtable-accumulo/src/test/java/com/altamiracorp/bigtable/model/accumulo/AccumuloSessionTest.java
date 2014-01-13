@@ -21,6 +21,7 @@ import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -172,7 +173,7 @@ public class AccumuloSessionTest {
 
         when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
-        List<Row> row = accumuloSession.findByRowStartsWith(TEST_TABLE_NAME, "testRowKey", queryUser);
+        List<Row> row = toList(accumuloSession.findByRowStartsWith(TEST_TABLE_NAME, "testRowKey", queryUser));
         assertEquals(2, row.size());
 
         assertEquals("testRowKey1", row.get(0).getRowKey().toString());
@@ -195,7 +196,7 @@ public class AccumuloSessionTest {
 
         when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
-        List<Row> rows = accumuloSession.findByRowKeyRange(TEST_TABLE_NAME, "testRowKey", "testRowKeyZ", queryUser);
+        List<Row> rows = toList(accumuloSession.findByRowKeyRange(TEST_TABLE_NAME, "testRowKey", "testRowKeyZ", queryUser));
         assertEquals(2, rows.size());
 
         Row row1 = rows.get(0);
@@ -223,11 +224,19 @@ public class AccumuloSessionTest {
 
         when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
-        List<Row> rows = accumuloSession.findByRowKeyRegex(TEST_TABLE_NAME, ".*1", queryUser);
+        List<Row> rows = toList(accumuloSession.findByRowKeyRegex(TEST_TABLE_NAME, ".*1", queryUser));
         assertEquals(1, rows.size());
 
         Row row1 = rows.get(0);
         assertEquals("testRowKey1", row1.getRowKey().toString());
         assertEquals("testValue1", row1.get("testColumnFamily1").get("testColumn1").toString());
+    }
+
+    private List<Row> toList(Iterable<Row> rows) {
+        List<Row> result = new ArrayList<Row>();
+        for (Row row : rows) {
+            result.add(row);
+        }
+        return result;
     }
 }

@@ -2,10 +2,7 @@ package com.altamiracorp.bigtable.model;
 
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class Repository<T extends Row> {
     private ModelSession modelSession;
@@ -40,14 +37,12 @@ public abstract class Repository<T extends Row> {
         return r;
     }
 
-    public List<T> findByRowStartsWith(String rowKeyPrefix, ModelUserContext user) {
-        Collection<Row> rows = modelSession.findByRowStartsWith(getTableName(), rowKeyPrefix, user);
-        return fromRows(rows);
+    public Iterable<T> findByRowStartsWith(String rowKeyPrefix, ModelUserContext user) {
+        return fromRows(modelSession.findByRowStartsWith(getTableName(), rowKeyPrefix, user));
     }
 
-    public List<T> findAll(ModelUserContext user) {
-        Collection<Row> rows = modelSession.findByRowStartsWith(getTableName(), null, user);
-        return fromRows(rows);
+    public Iterable<T> findAll(ModelUserContext user) {
+        return fromRows(modelSession.findByRowStartsWith(getTableName(), null, user));
     }
 
     public void save(T obj, ModelUserContext user) {
@@ -68,14 +63,32 @@ public abstract class Repository<T extends Row> {
         modelSession.saveMany(tableName, rows, user);
     }
 
-    public List<T> fromRows(Collection<Row> rows) {
-        ArrayList<T> results = new ArrayList<T>();
-        for (Row row : rows) {
-            T r = fromRow(row);
-            r.setDirtyBits(false);
-            results.add(r);
-        }
-        return results;
+    public Iterable<T> fromRows(final Iterable<Row> rows) {
+        return new Iterable<T>() {
+            @Override
+            public Iterator<T> iterator() {
+                final Iterator<Row> it = rows.iterator();
+                return new Iterator<T>() {
+                    @Override
+                    public boolean hasNext() {
+                        return it.hasNext();
+                    }
+
+                    @Override
+                    public T next() {
+                        Row row = it.next();
+                        T r = fromRow(row);
+                        r.setDirtyBits(false);
+                        return r;
+                    }
+
+                    @Override
+                    public void remove() {
+                        it.remove();
+                    }
+                };
+            }
+        };
     }
 
     public void delete(RowKey rowKey, ModelUserContext user) {

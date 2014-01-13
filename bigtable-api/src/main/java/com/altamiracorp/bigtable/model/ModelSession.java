@@ -36,7 +36,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract List<Row> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user);
+    public abstract Iterable<Row> findByRowKeyRange(String tableName, String keyStart, String keyEnd, ModelUserContext user);
 
     /**
      * Find rows based on the prefix of the row keys
@@ -46,7 +46,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract List<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user);
+    public abstract Iterable<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user);
 
     /**
      * Find rows with the group of row keys that match the provided regular expression
@@ -56,7 +56,7 @@ public abstract class ModelSession {
      * @param user
      * @return
      */
-    public abstract List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user);
+    public abstract Iterable<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user);
 
     public abstract Iterable<Row> findAll(String tableName, ModelUserContext user);
 
