@@ -144,6 +144,24 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
+    public long rowCount(String tableName, ModelUserContext user) {
+        LOGGER.trace("rowCount called with parameters: tableName=?, user=?", tableName, user);
+        try {
+            // TODO this requires all rows to be returned to the client. It would be nice to have this run server side.
+            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            RowIterator rowIterator = new RowIterator(scanner);
+            long count = 0;
+            while (rowIterator.hasNext()) {
+                rowIterator.next();
+                count++;
+            }
+            return count;
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public Row findByRowKey(String tableName, String rowKey, ModelUserContext user) {
         LOGGER.trace("findByRowKey called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
         try {
