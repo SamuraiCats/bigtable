@@ -6,10 +6,10 @@
 
     <groupId>com.altamiracorp.bigtable</groupId>
     <artifactId>bigtable-ui</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0-SNAPSHOT</version>
     <packaging>war</packaging>
     
-    <name>BigTable UI</name>
+    <name>BigTable: UI</name>
     
     <scm>
         <url>https://github.com/altamiracorp/bigtable-ui</url>
@@ -127,13 +127,13 @@
 
         <dependency>
             <groupId>com.altamiracorp.bigtable</groupId>
-            <artifactId>bigtable-model</artifactId>
-            <version>0.1.0</version>
+            <artifactId>bigtable-api</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.altamiracorp.bigtable</groupId>
-            <artifactId>accumulo-model</artifactId>
-            <version>0.1.0</version>
+            <artifactId>bigtable-accumulo</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
