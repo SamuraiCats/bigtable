@@ -44,7 +44,7 @@ public class AccumuloColumnFamilyTest {
         adminUser = new AccumuloUserContext(new Authorizations("A", "B"));
         queryUser = new AccumuloUserContext(new Authorizations("B"));
 
-        accumuloSession = new AccumuloSession(connector);
+        accumuloSession = new AccumuloSession(connector, true);
         accumuloSession.initializeTable(TEST_TABLE_NAME, adminUser);
     }
 

@@ -4,6 +4,7 @@ import com.altamiracorp.bigtable.model.*;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -13,10 +14,7 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -33,6 +31,8 @@ public class AccumuloSession extends ModelSession {
     private long maxMemory = 1000000L;
     private long maxLatency = 1000L;
     private int maxWriteThreads = 10;
+    private boolean autoflush = true;
+    private final Map<String, BatchWriter> batchWriters = new HashMap<String, BatchWriter>();
 
     @Override
     public void init(Map<String, Object> properties) {
@@ -47,6 +47,11 @@ public class AccumuloSession extends ModelSession {
             }
             ZooKeeperInstance zk = new ZooKeeperInstance((String) properties.get(ACCUMULO_INSTANCE_NAME), zkServerNames);
             this.connector = zk.getConnector((String) properties.get(ACCUMULO_USER), ((String) properties.get(ACCUMULO_PASSWORD)).getBytes());
+
+            Object autoflushObj = properties.get(CONFIG_AUTOFLUSH);
+            if (autoflushObj != null) {
+                this.autoflush = Boolean.getBoolean(autoflushObj.toString());
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -56,20 +61,20 @@ public class AccumuloSession extends ModelSession {
 
     }
 
-    public AccumuloSession(Connector connector) {
+    public AccumuloSession(Connector connector, boolean autoflush) {
         this.connector = connector;
+        this.autoflush = autoflush;
     }
 
     @Override
     public void save(Row row, ModelUserContext user) {
         LOGGER.trace("save called with parameters: row=?, user=?", row, user);
         try {
-            BatchWriter writer = connector.createBatchWriter(row.getTableName(), getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+            BatchWriter writer = getBatchWriter(row.getTableName());
             AccumuloHelper.addRowToWriter(writer, row);
-            writer.flush();
-            writer.close();
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
+            if (this.autoflush) {
+                writer.flush();
+            }
         } catch (MutationsRejectedException e) {
             throw new RuntimeException(e);
         }
@@ -82,15 +87,13 @@ public class AccumuloSession extends ModelSession {
             return;
         }
         try {
-            BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+            BatchWriter writer = getBatchWriter(tableName);
             for (Row row : rows) {
                 AccumuloHelper.addRowToWriter(writer, row);
             }
-            writer.flush();
-            writer.close();
-
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
+            if (this.autoflush) {
+                writer.flush();
+            }
         } catch (MutationsRejectedException e) {
             throw new RuntimeException(e);
         }
@@ -267,13 +270,14 @@ public class AccumuloSession extends ModelSession {
     public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
         LOGGER.trace("deleteColumn called with parameters: row=?, tableName=?, columnFamily=?, columnQualifier=?, user=?", row, tableName, columnFamily, columnQualifier, user);
         try {
-            BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+            BatchWriter writer = getBatchWriter(tableName);
             Mutation mutation = createMutationFromRow(row);
             mutation.putDelete(new Text(columnFamily), new Text(columnQualifier));
             writer.addMutation(mutation);
-            writer.flush();
-            connector.tableOperations().flush(tableName, null, null, true);
-            writer.close();
+            if (this.autoflush) {
+                writer.flush();
+                connector.tableOperations().flush(tableName, null, null, true);
+            }
         } catch (AccumuloException ae) {
             throw new RuntimeException(ae);
         } catch (AccumuloSecurityException ase) {
@@ -291,7 +295,40 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void close() {
-        //Accumulo a persistent connection object, so this is unnecessary
+        flush();
+        for (Map.Entry<String, BatchWriter> writer : this.batchWriters.entrySet()) {
+            try {
+                writer.getValue().close();
+            } catch (MutationsRejectedException e) {
+                throw new RuntimeException("Could not close writer for table: " + writer.getKey());
+            }
+        }
+    }
+
+    @Override
+    public void flush() {
+        for (Map.Entry<String, BatchWriter> writer : this.batchWriters.entrySet()) {
+            try {
+                writer.getValue().flush();
+            } catch (MutationsRejectedException e) {
+                throw new RuntimeException("Could not close writer for table: " + writer.getKey());
+            }
+        }
+    }
+
+    private BatchWriter getBatchWriter(String tableName) {
+        try {
+            synchronized (this.batchWriters) {
+                BatchWriter writer = this.batchWriters.get(tableName);
+                if (writer == null) {
+                    writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+                    this.batchWriters.put(tableName, writer);
+                }
+                return writer;
+            }
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException("Could not find table: " + tableName);
+        }
     }
 
     public long getMaxMemory() {

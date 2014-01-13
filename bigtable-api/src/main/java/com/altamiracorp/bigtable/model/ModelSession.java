@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ModelSession {
+    protected static final String CONFIG_AUTOFLUSH = "bigtable.autoflush";
 
     public abstract void init(Map<String, Object> properties);
 
@@ -131,4 +132,9 @@ public abstract class ModelSession {
      * Close this session, cleanup resources
      */
     public abstract void close();
+
+    /**
+     * Flushes any in-queue rows to storage. This method has no effect if autocommit is true.
+     */
+    public abstract void flush();
 }
