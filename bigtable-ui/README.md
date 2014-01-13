@@ -1,8 +1,4 @@
 
-# bigtable-ui
-
-UI for big tables.
-
 # How to run
 
 -   Copy model.config.sample to model.config and change appropriately.
