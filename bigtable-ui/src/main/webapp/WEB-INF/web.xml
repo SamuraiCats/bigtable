@@ -1,0 +1,35 @@
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" version="2.5">
+    <context-param>
+        <param-name>AuthenticationProvider</param-name>
+        <param-value>com.altamiracorp.bigtableui.security.SessionAuthenticationProvider</param-value>
+    </context-param>
+    <context-param>
+        <param-name>UserRepository</param-name>
+        <param-value>com.altamiracorp.bigtableui.security.DevUserRepository</param-value>
+    </context-param>
+    <context-param>
+        <param-name>ModelSession</param-name>
+        <param-value>com.altamiracorp.bigtable.model.accumulo.AccumuloSession</param-value>
+    </context-param>
+    <context-param>
+        <param-name>ModelPropertiesFileName</param-name>
+        <param-value>./model.config</param-value>
+    </context-param>
+    
+    <listener>
+        <listener-class>com.altamiracorp.bigtableui.ApplicationBootstrap</listener-class>
+    </listener>
+
+    <servlet>
+        <servlet-name>bigtableui</servlet-name>
+        <servlet-class>com.altamiracorp.bigtableui.Router</servlet-class>
+        <init-param>
+            <param-name>env</param-name>
+            <param-value>dev</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>bigtableui</servlet-name>
+        <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+</web-app>

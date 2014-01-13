@@ -1,0 +1,36 @@
+<div class="table-responsive">
+    <table class="table table-bordered table-hover table-striped tablesorter">
+        <thead>
+            <tr>
+                <th class="header">Column Family</th>
+                <th class="header">Column Qualifier</th>
+                <th class="header">Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% rows.forEach(function(row) { %>
+                <tr>
+                    <td colspan="3" class="warning"><%= bytesToString(row.key) %></td>
+                </tr>
+                <% Object.keys(row.columnFamilies).sort().forEach(function(columnFamilyKey, columnFamilyIndex) { %>
+                    <% var columnFamily = row.columnFamilies[columnFamilyKey]; %>
+                    <% Object.keys(columnFamily.columns).sort().forEach(function(columnKey, columnIndex) { %>
+                        <% var column = columnFamily.columns[columnKey]; %>
+                        <tr>
+                            <% if(columnIndex == 0) { %>
+                                <td rowspan="<%= Object.keys(columnFamily.columns).length %>"><%= bytesToString(columnFamilyKey) %></td>
+                            <% } %>
+                            <td>
+                                <%= bytesToString(columnKey) %>
+                                <% if(column.visibility) { %>
+                                    <small><%= column.visibility %></small>
+                                <% } %>
+                            </td>
+                            <td style="word-break: break-word;"><%= columnToHtml(column) %></td>
+                        </tr>
+                    <% }) %>
+                <% }) %>
+            <% }) %>
+        </tbody>
+    </table>
+</div>

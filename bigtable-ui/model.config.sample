@@ -1,0 +1,5 @@
+
+bigtable.accumulo.zookeeperServerNames=myzookeeper
+bigtable.accumulo.instanceName=myinstance
+bigtable.accumulo.username=root
+bigtable.accumulo.password=password
