@@ -1,12 +1,12 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
 import com.altamiracorp.bigtable.model.*;
-import com.altamiracorp.bigtable.model.Column;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.core.data.*;
+import org.apache.accumulo.core.data.Mutation;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.iterators.user.RowDeletingIterator;
@@ -280,6 +280,7 @@ public class AccumuloSession extends ModelSession {
             try {
                 Mutation mutation = new Mutation(rowKey.toString());
                 mutation.put(new byte[0], new byte[0], RowDeletingIterator.DELETE_ROW_VALUE.get());
+                writer.addMutation(mutation);
                 writer.flush();
             } catch (AccumuloException ae) {
                 throw new RuntimeException(ae);
