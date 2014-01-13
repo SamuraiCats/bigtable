@@ -4,6 +4,7 @@ import com.altamiracorp.bigtable.model.*;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
@@ -27,7 +28,7 @@ public class AccumuloSession extends ModelSession {
     private static final String ACCUMULO_PASSWORD = "bigtable.accumulo.password";
     private static final String ZK_SERVER_NAMES = "bigtable.accumulo.zookeeperServerNames";
 
-    private static final String ROW_DELETING_ITERATOR_NAME = "RowDeletingIterator";
+    private static final String ROW_DELETING_ITERATOR_NAME = RowDeletingIterator.class.getSimpleName();
     private static final int ROW_DELETING_ITERATOR_PRIORITY = 7;
 
     private Connector connector;
@@ -47,7 +48,10 @@ public class AccumuloSession extends ModelSession {
                 zkServerNames = (String) properties.get(ZK_SERVER_NAMES);
             }
             ZooKeeperInstance zk = new ZooKeeperInstance((String) properties.get(ACCUMULO_INSTANCE_NAME), zkServerNames);
-            this.connector = zk.getConnector((String) properties.get(ACCUMULO_USER), ((String) properties.get(ACCUMULO_PASSWORD)).getBytes());
+
+            String username = (String) properties.get(ACCUMULO_USER);
+            String password = (String) properties.get(ACCUMULO_PASSWORD);
+            this.connector = zk.getConnector(username, new PasswordToken(password));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -182,6 +186,17 @@ public class AccumuloSession extends ModelSession {
     }
 
     private Scanner createScanner(String tableName, ModelUserContext user) throws TableNotFoundException {
+        IteratorSetting is = new IteratorSetting(ROW_DELETING_ITERATOR_PRIORITY, ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
+        try {
+            if (!this.connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
+                this.connector.tableOperations().attachIterator(tableName, is);
+            }
+
+//            return this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
         IteratorSetting iteratorSetting = new IteratorSetting(
                 100,
@@ -263,17 +278,11 @@ public class AccumuloSession extends ModelSession {
         try {
             BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
             try {
-                IteratorSetting is = new IteratorSetting(ROW_DELETING_ITERATOR_PRIORITY, ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
-                if (!connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
-                    connector.tableOperations().attachIterator(tableName, is);
-                }
                 Mutation mutation = new Mutation(rowKey.toString());
                 mutation.put("", "", RowDeletingIterator.DELETE_ROW_VALUE);
                 writer.flush();
             } catch (AccumuloException ae) {
                 throw new RuntimeException(ae);
-            } catch (AccumuloSecurityException ase) {
-                throw new RuntimeException(ase);
             } finally {
                 writer.close();
             }
