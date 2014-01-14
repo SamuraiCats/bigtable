@@ -102,4 +102,8 @@ public abstract class Repository<T extends Row> {
     protected ModelSession getModelSession() {
         return modelSession;
     }
+
+    public void flush() {
+        getModelSession().flush();
+    }
 }
