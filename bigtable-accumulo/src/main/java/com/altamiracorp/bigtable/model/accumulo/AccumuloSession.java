@@ -35,6 +35,7 @@ public class AccumuloSession extends ModelSession {
     private int maxWriteThreads = 10;
     private boolean autoflush = true;
     private final Map<String, BatchWriter> batchWriters = new HashMap<String, BatchWriter>();
+    private final Set<String> rowDeletingIteratorAttachList = new HashSet<String>();
 
     @Override
     public void init(Map<String, Object> properties) {
@@ -190,14 +191,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     private Scanner createScanner(String tableName, ModelUserContext user) throws TableNotFoundException {
-        IteratorSetting is = new IteratorSetting(ROW_DELETING_ITERATOR_PRIORITY, ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
-        try {
-            if (!this.connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
-                this.connector.tableOperations().attachIterator(tableName, is);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        ensureRowDeletingIteratorIsAttached(tableName);
 
         Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
         IteratorSetting iteratorSetting = new IteratorSetting(
@@ -207,6 +201,22 @@ public class AccumuloSession extends ModelSession {
         );
         scanner.addScanIterator(iteratorSetting);
         return scanner;
+    }
+
+    private void ensureRowDeletingIteratorIsAttached(String tableName) {
+        try {
+            if (rowDeletingIteratorAttachList.contains(tableName)) {
+                return;
+            }
+
+            IteratorSetting is = new IteratorSetting(ROW_DELETING_ITERATOR_PRIORITY, ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
+            if (!this.connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
+                this.connector.tableOperations().attachIterator(tableName, is);
+            }
+            rowDeletingIteratorAttachList.add(tableName);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
