@@ -8,17 +8,16 @@ import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockConnector;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.core.security.thrift.AuthInfo;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
@@ -26,9 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
 
 
 @RunWith(JUnit4.class)
@@ -41,8 +38,6 @@ public class AccumuloSessionTest {
     private long maxMemory = 1000000L;
     private long maxLatency = 1000L;
     private int maxWriteThreads = 10;
-
-    @Mock
     private AccumuloUserContext queryUser;
 
     @Before
@@ -50,14 +45,12 @@ public class AccumuloSessionTest {
         MockitoAnnotations.initMocks(this);
 
         mockInstance = new MockInstance();
-        AuthInfo authInfo = new AuthInfo();
-        authInfo.setUser("testUser");
-        authInfo.setPassword("testPassword".getBytes());
-        connector = (MockConnector) mockInstance.getConnector(authInfo);
+        connector = (MockConnector) mockInstance.getConnector("testUser", new PasswordToken("testPassword".getBytes()));
 
         authorizations = new Authorizations("ALL");
+        queryUser = new AccumuloUserContext(authorizations);
 
-        accumuloSession = new AccumuloSession(connector);
+        accumuloSession = new AccumuloSession(connector, true);
         accumuloSession.initializeTable(TEST_TABLE_NAME, queryUser);
     }
 
@@ -141,8 +134,6 @@ public class AccumuloSessionTest {
         writer.addMutation(mutation);
         writer.close();
 
-        when(queryUser.getAuthorizations()).thenReturn(authorizations);
-
         Row row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey", queryUser);
         assertEquals(TEST_TABLE_NAME, row.getTableName());
         assertEquals("testRowKey", row.getRowKey().toString());
@@ -171,8 +162,6 @@ public class AccumuloSessionTest {
         writer.addMutation(mutation);
         writer.close();
 
-        when(queryUser.getAuthorizations()).thenReturn(authorizations);
-
         List<Row> row = toList(accumuloSession.findByRowStartsWith(TEST_TABLE_NAME, "testRowKey", queryUser));
         assertEquals(2, row.size());
 
@@ -193,8 +182,6 @@ public class AccumuloSessionTest {
         writer.addMutation(mutation);
 
         writer.close();
-
-        when(queryUser.getAuthorizations()).thenReturn(authorizations);
 
         List<Row> rows = toList(accumuloSession.findByRowKeyRange(TEST_TABLE_NAME, "testRowKey", "testRowKeyZ", queryUser));
         assertEquals(2, rows.size());
@@ -222,8 +209,6 @@ public class AccumuloSessionTest {
 
         writer.close();
 
-        when(queryUser.getAuthorizations()).thenReturn(authorizations);
-
         List<Row> rows = toList(accumuloSession.findByRowKeyRegex(TEST_TABLE_NAME, ".*1", queryUser));
         assertEquals(1, rows.size());
 
@@ -238,5 +223,23 @@ public class AccumuloSessionTest {
             result.add(row);
         }
         return result;
+    }
+
+    @Test
+    public void testDeleteRow() throws TableNotFoundException {
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        ColumnFamily columnFamily1 = new ColumnFamily("testColumnFamily1");
+        columnFamily1.set("1testColumn1", "1testColumn1Value");
+        row.addColumnFamily(columnFamily1);
+
+        accumuloSession.save(row, queryUser);
+
+        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", this.queryUser);
+        assertNotNull("row should exist", row);
+
+        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"), this.queryUser);
+
+        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", this.queryUser);
+        assertNull("row should be deleted", row);
     }
 }

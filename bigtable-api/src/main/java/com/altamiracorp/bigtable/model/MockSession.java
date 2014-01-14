@@ -151,4 +151,9 @@ public class MockSession extends ModelSession {
     @Override
     public void close() {
     }
+
+    @Override
+    public void flush() {
+        // This method has no effect since mock session is always autocommit
+    }
 }
