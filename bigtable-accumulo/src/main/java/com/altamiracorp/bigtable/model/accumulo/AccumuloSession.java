@@ -5,10 +5,12 @@ import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
+import org.apache.accumulo.core.iterators.user.RowDeletingIterator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
@@ -24,7 +26,7 @@ public class AccumuloSession extends ModelSession {
     private static final String ACCUMULO_PASSWORD = "bigtable.accumulo.password";
     private static final String ZK_SERVER_NAMES = "bigtable.accumulo.zookeeperServerNames";
 
-    private static final String ROW_DELETING_ITERATOR_NAME = "RowDeletingIterator";
+    private static final String ROW_DELETING_ITERATOR_NAME = RowDeletingIterator.class.getSimpleName();
     private static final int ROW_DELETING_ITERATOR_PRIORITY = 7;
 
     private Connector connector;
@@ -46,7 +48,10 @@ public class AccumuloSession extends ModelSession {
                 zkServerNames = (String) properties.get(ZK_SERVER_NAMES);
             }
             ZooKeeperInstance zk = new ZooKeeperInstance((String) properties.get(ACCUMULO_INSTANCE_NAME), zkServerNames);
-            this.connector = zk.getConnector((String) properties.get(ACCUMULO_USER), ((String) properties.get(ACCUMULO_PASSWORD)).getBytes());
+
+            String username = (String) properties.get(ACCUMULO_USER);
+            String password = (String) properties.get(ACCUMULO_PASSWORD);
+            this.connector = zk.getConnector(username, new PasswordToken(password));
 
             Object autoflushObj = properties.get(CONFIG_AUTOFLUSH);
             if (autoflushObj != null) {
@@ -103,7 +108,7 @@ public class AccumuloSession extends ModelSession {
     public List<Row> findByRowKeyRange(String tableName, String rowKeyStart, String rowKeyEnd, ModelUserContext user) {
         LOGGER.trace("findByRowKeyRange called with parameters: tableName=?, rowKeyStart=?, rowKeyEnd=?, user=?", tableName, rowKeyStart, rowKeyEnd, user);
         try {
-            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            Scanner scanner = createScanner(tableName, user);
             if (rowKeyStart != null) {
                 scanner.setRange(new Range(rowKeyStart, rowKeyEnd));
             }
@@ -122,7 +127,7 @@ public class AccumuloSession extends ModelSession {
     public List<Row> findByRowKeyRegex(String tableName, String rowKeyRegex, ModelUserContext user) {
         LOGGER.trace("findByRowKeyRegex called with parameters: tableName=?, rowKeyRegex=?, user=?", tableName, rowKeyRegex, user);
         try {
-            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            Scanner scanner = createScanner(tableName, user);
             scanner.setRange(new Range());
 
             IteratorSetting iter = new IteratorSetting(15, "regExFilter", RegExFilter.class);
@@ -139,7 +144,7 @@ public class AccumuloSession extends ModelSession {
     public Iterable<Row> findAll(String tableName, ModelUserContext user) {
         LOGGER.trace("findAll called with parameters: tableName=?, user=?", tableName, user);
         try {
-            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            Scanner scanner = createScanner(tableName, user);
             return AccumuloHelper.scannerToRowsIterable(tableName, scanner);
         } catch (TableNotFoundException e) {
             throw new RuntimeException(e);
@@ -151,7 +156,7 @@ public class AccumuloSession extends ModelSession {
         LOGGER.trace("rowCount called with parameters: tableName=?, user=?", tableName, user);
         try {
             // TODO this requires all rows to be returned to the client. It would be nice to have this run server side.
-            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            Scanner scanner = createScanner(tableName, user);
             RowIterator rowIterator = new RowIterator(scanner);
             long count = 0;
             while (rowIterator.hasNext()) {
@@ -168,7 +173,7 @@ public class AccumuloSession extends ModelSession {
     public Row findByRowKey(String tableName, String rowKey, ModelUserContext user) {
         LOGGER.trace("findByRowKey called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
         try {
-            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            Scanner scanner = createScanner(tableName, user);
             scanner.setRange(new Range(rowKey));
             List<Row> rows = AccumuloHelper.scannerToRows(tableName, scanner);
             if (rows.size() == 0) {
@@ -183,11 +188,31 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
+    private Scanner createScanner(String tableName, ModelUserContext user) throws TableNotFoundException {
+        IteratorSetting is = new IteratorSetting(ROW_DELETING_ITERATOR_PRIORITY, ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
+        try {
+            if (!this.connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
+                this.connector.tableOperations().attachIterator(tableName, is);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+        IteratorSetting iteratorSetting = new IteratorSetting(
+                100,
+                RowDeletingIterator.class.getSimpleName(),
+                RowDeletingIterator.class
+        );
+        scanner.addScanIterator(iteratorSetting);
+        return scanner;
+    }
+
     @Override
     public Row findByRowKey(String tableName, String rowKey, Map<String, String> columnsToReturn, ModelUserContext user) {
         LOGGER.trace("findByRowKey called with parameters: tableName=?, rowKey=?, columnsToReturn=?, user=?", tableName, rowKey, columnsToReturn, user);
         try {
-            Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+            Scanner scanner = createScanner(tableName, user);
             scanner.setRange(new Range(rowKey));
             for (Map.Entry<String, String> columnFamilyAndColumnQualifier : columnsToReturn.entrySet()) {
                 if (columnFamilyAndColumnQualifier.getValue().equals("*")) {
@@ -245,24 +270,28 @@ public class AccumuloSession extends ModelSession {
 
     @Override
     public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
-        LOGGER.trace(
-                "deleteRow called with parameters: tableName=?, rowKey=?, user=?",
-                tableName, rowKey, user);
+        LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
+        // In most instances (e.g., when reading is not necessary), the
+        // RowDeletingIterator gives better performance than the deleting
+        // mutation. This is due to the fact that Deleting mutations marks each
+        // entry with a delete marker. Using the iterator marks a whole row with
+        // a single mutation.
         try {
-            // TODO: Find a better way to delete a single row given the row key
-            String strRowKey = rowKey.toString();
-            char lastChar = strRowKey.charAt(strRowKey.length() - 1);
-            char asciiCharBeforeLastChar = (char) (((int) lastChar) - 1);
-            String precedingRowKey = strRowKey.substring(0, strRowKey.length() - 1) + asciiCharBeforeLastChar;
-            Text startRowKey = new Text(precedingRowKey);
-            Text endRowKey = new Text(strRowKey);
-            connector.tableOperations().deleteRows(tableName, startRowKey, endRowKey);
-        } catch (AccumuloException e) {
-            throw new RuntimeException(e);
-        } catch (AccumuloSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
+            BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+            try {
+                Mutation mutation = new Mutation(rowKey.toString());
+                mutation.put(new byte[0], new byte[0], RowDeletingIterator.DELETE_ROW_VALUE.get());
+                writer.addMutation(mutation);
+                writer.flush();
+            } catch (AccumuloException ae) {
+                throw new RuntimeException(ae);
+            } finally {
+                writer.close();
+            }
+        } catch (MutationsRejectedException mre) {
+            throw new RuntimeException(mre);
+        } catch (TableNotFoundException tnfe) {
+            throw new RuntimeException(tnfe);
         }
     }
 
