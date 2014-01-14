@@ -294,7 +294,9 @@ public class AccumuloSession extends ModelSession {
                 Mutation mutation = new Mutation(rowKey.toString());
                 mutation.put(new byte[0], new byte[0], RowDeletingIterator.DELETE_ROW_VALUE.get());
                 writer.addMutation(mutation);
-                writer.flush();
+                if (this.autoflush) {
+                    writer.flush();
+                }
             } catch (AccumuloException ae) {
                 throw new RuntimeException(ae);
             } finally {
