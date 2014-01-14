@@ -17,7 +17,18 @@ public abstract class ModelSession {
      * @param row
      * @param user
      */
-    public abstract void save(Row row, ModelUserContext user);
+    public void save(Row row, ModelUserContext user) {
+        save(row, FlushFlag.DEFAULT, user);
+    }
+
+    /**
+     * Save a row
+     *
+     * @param row
+     * @param flushFlag
+     * @param user
+     */
+    public abstract void save(Row row, FlushFlag flushFlag, ModelUserContext user);
 
     /**
      * Save a collection of rows

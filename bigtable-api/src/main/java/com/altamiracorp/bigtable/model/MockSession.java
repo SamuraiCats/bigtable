@@ -14,7 +14,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void save(Row row, ModelUserContext user) {
+    public void save(Row row, FlushFlag flushFlag, ModelUserContext user) {
         List<Row> table = tables.get(row.getTableName());
         if (table == null) {
             throw new NullPointerException("Could not find table with name: " + row.getTableName());

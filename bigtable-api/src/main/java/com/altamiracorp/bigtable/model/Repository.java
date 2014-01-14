@@ -46,8 +46,12 @@ public abstract class Repository<T extends Row> {
     }
 
     public void save(T obj, ModelUserContext user) {
+        save(obj, FlushFlag.DEFAULT, user);
+    }
+
+    public void save(T obj, FlushFlag flushFlag, ModelUserContext user) {
         Row r = toRow(obj);
-        modelSession.save(r, user);
+        modelSession.save(r, flushFlag, user);
     }
 
     public void saveMany(Collection<T> objs, ModelUserContext user) {

@@ -73,16 +73,31 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void save(Row row, ModelUserContext user) {
+    public void save(Row row, FlushFlag flushFlag, ModelUserContext user) {
         LOGGER.trace("save called with parameters: row=?, user=?", row, user);
         try {
             BatchWriter writer = getBatchWriter(row.getTableName());
             AccumuloHelper.addRowToWriter(writer, row);
-            if (this.autoflush) {
-                writer.flush();
-            }
+            flush(writer, flushFlag);
         } catch (MutationsRejectedException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void flush(BatchWriter writer, FlushFlag flushFlag) throws MutationsRejectedException {
+        switch (flushFlag) {
+            case DEFAULT:
+                if (this.autoflush) {
+                    writer.flush();
+                }
+                break;
+            case FLUSH:
+                writer.flush();
+                break;
+            case NO_FLUSH:
+                break;
+            default:
+                throw new RuntimeException("Unexpected flush flag: " + flushFlag);
         }
     }
 
