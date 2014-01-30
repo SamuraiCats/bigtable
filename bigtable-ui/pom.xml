@@ -10,19 +10,6 @@
     <packaging>war</packaging>
     
     <name>BigTable: UI</name>
-    
-    <scm>
-        <url>https://github.com/altamiracorp/bigtable-ui</url>
-        <connection>scm:git:git://github.com/altamiracorp/bigtable-ui.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/altamiracorp/bigtable-ui.git</developerConnection>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>bits.lumify.io</id>
-            <url>file:///var/www/maven/</url>
-        </repository>
-    </distributionManagement>
 
     <properties>
         <jetty-version>8.1.14.v20131031</jetty-version>
@@ -32,25 +19,6 @@
         <plugin.buildnumber.version>1.2</plugin.buildnumber.version>
         <plugin.maven.war.version>2.3</plugin.maven.war.version>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>ext-releases</id>
-            <url>http://bits.lumify.io/m2/</url>
-        </repository>
-        <repository>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-            <id>ext-snapshots</id>
-            <url>http://bits.lumify.io/m2/</url>
-        </repository>
-        <repository>
-            <id>com.cloudera</id>
-            <url>https://repository.cloudera.com/content/repositories/releases/</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
