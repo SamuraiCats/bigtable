@@ -13,13 +13,6 @@
 
     <name>BigTable: Core API</name>
 
-    <distributionManagement>
-        <repository>
-            <id>bits.lumify.io</id>
-            <url>file:///var/www/maven/</url>
-        </repository>
-    </distributionManagement>
-
     <dependencies>
         <dependency>
             <groupId>org.json</groupId>

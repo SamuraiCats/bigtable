@@ -13,24 +13,10 @@
 
     <name>BigTable: Accumulo</name>
 
-    <distributionManagement>
-        <repository>
-            <id>bits.lumify.io</id>
-            <url>file:///var/www/maven/</url>
-        </repository>
-    </distributionManagement>
-
     <properties>
         <accumulo-version>1.5.0</accumulo-version>
         <hadoop-version>0.20.2</hadoop-version>
     </properties>
-
-    <repositories>
-        <repository>
-            <id>lumify-releases</id>
-            <url>http://bits.lumify.io/m2/</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>
