@@ -14,6 +14,14 @@
             <label>End</label>
             <input class="form-control query-end" placeholder="Enter end" value="\xff">
         </div>
+        <div class="form-group">
+            <label>Authorizations</label>
+            <input class="form-control query-authorizations" placeholder="Enter comma seperated list of authorizations" value="<%= querySetting.authorizations %>">
+        </div>
+        <div class="form-group">
+            <label>Row Count</label>
+            <input class="form-control query-rowCount" placeholder="Number of rows to return" value="<%= querySetting.rowCount %>">
+        </div>
         <button type="submit" class="btn btn-default query">Query</button>
     </form>
   </div>

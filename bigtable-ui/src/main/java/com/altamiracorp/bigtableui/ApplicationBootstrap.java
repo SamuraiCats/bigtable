@@ -1,8 +1,6 @@
 package com.altamiracorp.bigtableui;
 
 import com.altamiracorp.bigtable.model.ModelSession;
-import com.altamiracorp.bigtableui.security.AuthenticationProvider;
-import com.altamiracorp.bigtableui.security.UserRepository;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -22,9 +20,7 @@ import java.util.Properties;
 
 public class ApplicationBootstrap extends AbstractModule implements ServletContextListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationBootstrap.class);
-    public static final String CONFIG_AUTHENTICATION_PROVIDER = "AuthenticationProvider";
-    public static final String CONFIG_USER_REPOSITORY = "UserRepository";
-    public static final String CONFIG_MODEL_SESSION = "ModelSession";
+    public static final String CONFIG_MODEL_SESSION = "bigtable.modelSession";
     private ServletContext context;
 
     @Override
@@ -50,29 +46,19 @@ public class ApplicationBootstrap extends AbstractModule implements ServletConte
 
     @Override
     protected void configure() {
-        bind(AuthenticationProvider.class).to(getAuthenticationProviderClass());
-        bind(UserRepository.class).to(getUserRepositoryClass());
-        bind(ModelSession.class).toInstance(createModelSession());
+        Map modelConfig = loadModelConfig();
+        bind(ModelSession.class).toInstance(createModelSession(modelConfig));
     }
 
-    private Class<AuthenticationProvider> getAuthenticationProviderClass() {
-        return getClassFromConfig(CONFIG_AUTHENTICATION_PROVIDER);
-    }
-
-    private Class<UserRepository> getUserRepositoryClass() {
-        return getClassFromConfig(CONFIG_USER_REPOSITORY);
-    }
-
-    private ModelSession createModelSession() {
-        ModelSession modelSession = (ModelSession) createClassInstanceFromConfig(CONFIG_MODEL_SESSION);
-        Map properties = loadModelProperties();
-        modelSession.init(properties);
+    private ModelSession createModelSession(Map modelConfig) {
+        ModelSession modelSession = (ModelSession) createClassInstanceFromConfig(modelConfig, CONFIG_MODEL_SESSION);
+        modelSession.init(modelConfig);
         return modelSession;
     }
 
-    private Map loadModelProperties() {
+    private Map loadModelConfig() {
         String fileName = getModelPropertiesFileName();
-        if (! new File(fileName).isFile()) {
+        if (fileName == null || !new File(fileName).isFile()) {
             fileName = "/opt/bigtable-ui/config/model.config";
         }
         try {
@@ -93,8 +79,8 @@ public class ApplicationBootstrap extends AbstractModule implements ServletConte
         return context.getInitParameter("ModelPropertiesFileName");
     }
 
-    private Object createClassInstanceFromConfig(String configKey) {
-        Class clazz = getClassFromConfig(configKey);
+    private Object createClassInstanceFromConfig(Map modelConfig, String configKey) {
+        Class clazz = getClassFromConfig(modelConfig, configKey);
         try {
             Constructor constructor = clazz.getConstructor();
             try {
@@ -107,8 +93,8 @@ public class ApplicationBootstrap extends AbstractModule implements ServletConte
         }
     }
 
-    private Class getClassFromConfig(String configKey) {
-        String className = (String) this.context.getInitParameter(configKey);
+    private Class getClassFromConfig(Map modelConfig, String configKey) {
+        String className = (String) modelConfig.get(configKey);
         if (className == null) {
             throw new RuntimeException("Could not find config: " + configKey);
         }

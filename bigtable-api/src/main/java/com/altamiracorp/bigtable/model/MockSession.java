@@ -156,4 +156,9 @@ public class MockSession extends ModelSession {
     public void flush() {
         // This method has no effect since mock session is always autocommit
     }
+
+    @Override
+    public ModelUserContext createModelUserContext(String... authorizations) {
+        return new MockModelUserContext();
+    }
 }

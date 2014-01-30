@@ -5,26 +5,15 @@ var tablesTemplate = new EJS({url: 'templates/tables.ejs'});
 var notFoundTemplate = new EJS({url: 'templates/notFound.ejs'});
 var queryResultsTemplate = new EJS({url: 'templates/queryResults.ejs'});
 var queryResultsColumnTemplate = new EJS({url: 'templates/queryResultsColumn.ejs'});
+var querySetting = {
+    authorizations: "",
+    rowCount: 100
+};
 
 $(function () {
-    loadUser();
     $(window).hashchange(onNavigate);
     onNavigate();
 });
-
-function loadUser() {
-    $.get('user', function (json) {
-        console.log('user', json);
-        $('.user-dropdown .logged-in').show();
-        $('.user-dropdown .logged-out').hide();
-        $('#user-name').text(json.username);
-    })
-        .fail(function () {
-            $('.user-dropdown .logged-out').show();
-            $('.user-dropdown .logged-in').hide();
-            $('#user-name').text("Not Logged In");
-        });
-}
 
 function loadTableList() {
     $.get('table', function (json) {
@@ -33,12 +22,13 @@ function loadTableList() {
         $('#main-pane').html(html);
     })
         .fail(function () {
-            $('#main-pane').text("Not Logged In");
+            $('#main-pane').text("Could not get table list");
         });
 }
 
 function loadTable(tableName) {
-    var html = tableTemplate.render({ name: tableName });
+    console.log(querySetting);
+    var html = tableTemplate.render({ name: tableName, querySetting: querySetting });
     $('#main-pane')
         .html(html)
         .on('click', 'button.query', onQueryTable.bind(null, tableName));
@@ -47,10 +37,15 @@ function loadTable(tableName) {
 function onQueryTable(tableName, event) {
     event.preventDefault();
 
+    querySetting.authorizations = $('#main-pane .query .query-authorizations').val();
+    querySetting.rowCount = $('#main-pane .query .query-rowCount').val();
+
     $('#main-pane .query-results').html("Loading...");
     var getData = {
         start: $('#main-pane .query .query-start').val(),
-        end: $('#main-pane .query .query-end').val()
+        end: $('#main-pane .query .query-end').val(),
+        authorizations: querySetting.authorizations,
+        rowCount: querySetting.rowCount
     };
     console.log('query', getData);
     $.getJSON('table/' + tableName, getData)

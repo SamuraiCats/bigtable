@@ -1,9 +1,8 @@
 package com.altamiracorp.bigtableui;
 
-import com.altamiracorp.bigtableui.routes.*;
-import com.altamiracorp.bigtableui.security.AuthenticationProvider;
+import com.altamiracorp.bigtableui.routes.Query;
+import com.altamiracorp.bigtableui.routes.TableGet;
 import com.altamiracorp.bigtableui.util.SimpleTemplateFileHandler;
-import com.altamiracorp.miniweb.Handler;
 import com.google.inject.Injector;
 
 import javax.servlet.ServletConfig;
@@ -24,17 +23,11 @@ public class Router extends HttpServlet {
 
         final Injector injector = (Injector) config.getServletContext().getAttribute(Injector.class.getName());
 
-        AuthenticationProvider authenticatorInstance = injector.getInstance(AuthenticationProvider.class);
-        Class<? extends Handler> authenticator = authenticatorInstance.getClass();
-
         app = new WebApp(config, injector);
         app.get("/index.html", new SimpleTemplateFileHandler());
-        app.get("/logout", LogOut.class);
-        app.post("/login", LogIn.class);
 
-        app.get("/user", authenticator, UserGet.class);
-        app.get("/table", authenticator, TableGet.class);
-        app.get("/table/{tableName}", authenticator, Query.class);
+        app.get("/table", TableGet.class);
+        app.get("/table/{tableName}", Query.class);
     }
 
     @Override

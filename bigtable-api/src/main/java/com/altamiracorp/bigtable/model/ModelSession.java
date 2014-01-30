@@ -148,4 +148,12 @@ public abstract class ModelSession {
      * Flushes any in-queue rows to storage. This method has no effect if autocommit is true.
      */
     public abstract void flush();
+
+    /**
+     * Creates ModelUserContext from a list of authorizations.
+     *
+     * @param authorizations list of authorizations
+     * @return The new module user context
+     */
+    public abstract ModelUserContext createModelUserContext(String... authorizations);
 }

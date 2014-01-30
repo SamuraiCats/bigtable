@@ -22,9 +22,10 @@ public class BigTableRepository {
         this.modelSession = modelSession;
     }
 
-    public List<Table> getTables(ModelUserContext user) {
+    public List<Table> getTables() {
         List<Table> results = new ArrayList<Table>();
-        List<String> tables = modelSession.getTableList(user);
+        ModelUserContext modelUserContext = modelSession.createModelUserContext();
+        List<String> tables = modelSession.getTableList(modelUserContext);
         for (String table : tables) {
             results.add(new Table(table));
         }

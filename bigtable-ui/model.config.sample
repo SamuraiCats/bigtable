@@ -1,4 +1,5 @@
 
+bigtable.modelSession=com.altamiracorp.bigtable.model.accumulo.AccumuloSession
 bigtable.accumulo.zookeeperServerNames=myzookeeper
 bigtable.accumulo.instanceName=myinstance
 bigtable.accumulo.username=root

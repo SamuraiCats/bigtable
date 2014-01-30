@@ -1,13 +1,9 @@
 package com.altamiracorp.bigtableui.routes;
 
-import com.altamiracorp.bigtable.model.Column;
-import com.altamiracorp.bigtable.model.ColumnFamily;
-import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.Value;
+import com.altamiracorp.bigtable.model.*;
 import com.altamiracorp.bigtable.model.accumulo.AccumuloColumn;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtableui.BigTableRepository;
-import com.altamiracorp.bigtableui.security.AuthenticationProvider;
-import com.altamiracorp.bigtableui.security.User;
 import com.altamiracorp.bigtableui.util.StringEscapeUtils;
 import com.altamiracorp.miniweb.HandlerChain;
 import com.google.inject.Inject;
@@ -18,23 +14,31 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 public class Query extends BaseRequestHandler {
     public static final int MAX_VALUE_LENGTH = 10000;
+    private final ModelSession modelSession;
     private final BigTableRepository bigTableRepository;
 
     @Inject
-    public Query(final BigTableRepository bigTableRepository) {
+    public Query(
+            final ModelSession modelSession,
+            final BigTableRepository bigTableRepository) {
+        this.modelSession = modelSession;
         this.bigTableRepository = bigTableRepository;
     }
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, HandlerChain chain) throws Exception {
-        User user = AuthenticationProvider.getUser(request);
         final String tableName = (String) request.getAttribute("tableName");
+        String authorizationsCommaSeparated = request.getParameter("authorizations");
         String start = request.getParameter("start");
         String end = request.getParameter("end");
+        String rowCountString = request.getParameter("rowCount");
+
+        if (authorizationsCommaSeparated == null) {
+            authorizationsCommaSeparated = "";
+        }
 
         if (start == null || start.length() == 0) {
             start = "\u0000";
@@ -44,22 +48,34 @@ public class Query extends BaseRequestHandler {
             end = "\uffff";
         }
 
+        if (rowCountString == null) {
+            rowCountString = "100";
+        }
+        long rowCount = Long.parseLong(rowCountString);
+
         start = StringEscapeUtils.unescapeCString(start);
         end = StringEscapeUtils.unescapeCString(end);
 
         JSONObject json = new JSONObject();
         json.put("tableName", tableName);
 
-        Iterable<Row> rows = this.bigTableRepository.query(tableName, start, end, user.getModelUserContext());
-        json.put("rows", rowsToJson(rows));
+        String[] authorizations = authorizationsCommaSeparated.split(",");
+        ModelUserContext modelUserContext = this.modelSession.createModelUserContext(authorizations);
+        Iterable<Row> rows = this.bigTableRepository.query(tableName, start, end, modelUserContext);
+        json.put("rows", rowsToJson(rows, rowCount));
 
         respondWithJson(response, json);
     }
 
-    private JSONArray rowsToJson(Iterable<Row> rows) {
+    private JSONArray rowsToJson(Iterable<Row> rows, long rowCount) {
         JSONArray result = new JSONArray();
+        long count = 0;
         for (Row row : rows) {
             result.put(rowToJson(row));
+            count++;
+            if (count > rowCount) {
+                break;
+            }
         }
         return result;
     }

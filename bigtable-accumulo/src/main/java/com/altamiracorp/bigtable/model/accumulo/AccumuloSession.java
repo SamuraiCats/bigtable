@@ -11,6 +11,7 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.iterators.user.RowDeletingIterator;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
@@ -372,6 +373,14 @@ public class AccumuloSession extends ModelSession {
                 throw new RuntimeException("Could not close writer for table: " + writer.getKey());
             }
         }
+    }
+
+    @Override
+    public ModelUserContext createModelUserContext(String... authorizations) {
+        if (authorizations.length == 1 && authorizations[0].length() == 0) {
+            return new AccumuloUserContext(new Authorizations());
+        }
+        return new AccumuloUserContext(new Authorizations(authorizations));
     }
 
     private BatchWriter getBatchWriter(String tableName) {
