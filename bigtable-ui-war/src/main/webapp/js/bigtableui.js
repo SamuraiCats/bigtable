@@ -29,6 +29,7 @@ function loadTableList() {
 function loadTable(tableName) {
     console.log(querySetting);
     var html = tableTemplate.render({ name: tableName, querySetting: querySetting });
+    $('#main-pane').off('click', 'button.query');
     $('#main-pane')
         .html(html)
         .on('click', 'button.query', onQueryTable.bind(null, tableName));
