@@ -46,5 +46,6 @@
         <module>bigtable-accumulo</module>
         <module>bigtable-ui</module>
         <module>bigtable-ui-server</module>
+        <module>bigtable-ui-war</module>
     </modules>
 </project>
