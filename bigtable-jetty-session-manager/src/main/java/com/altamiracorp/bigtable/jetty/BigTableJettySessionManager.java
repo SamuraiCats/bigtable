@@ -24,10 +24,10 @@ public abstract class BigTableJettySessionManager extends NoSqlSessionManager {
     private final ModelUserContext modelUserContext;
     private final LoadingCache<String, Optional<JettySessionRow>> cache;
 
-    protected BigTableJettySessionManager(ModelSession modelSession, ModelUserContext modelUserContext) {
+    protected BigTableJettySessionManager(ModelSession modelSession) {
         this.modelSession = modelSession;
         this.jettySessionRepository = new JettySessionRepository(modelSession);
-        this.modelUserContext = modelUserContext;
+        this.modelUserContext = this.modelSession.createModelUserContext();
 
         this.cache = CacheBuilder.newBuilder()
                 .maximumSize(CACHE_MAX_SIZE)
