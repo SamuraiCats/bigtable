@@ -29,6 +29,8 @@ public abstract class BigTableJettySessionManager extends NoSqlSessionManager {
         this.jettySessionRepository = new JettySessionRepository(modelSession);
         this.modelUserContext = this.modelSession.createModelUserContext();
 
+        getModelSession().initializeTable(JettySessionRow.TABLE_NAME, getModelUserContext());
+
         this.cache = CacheBuilder.newBuilder()
                 .maximumSize(CACHE_MAX_SIZE)
                 .expireAfterWrite(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
