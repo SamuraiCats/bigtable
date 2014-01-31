@@ -15,7 +15,7 @@ import org.eclipse.jetty.nosql.NoSqlSessionManager;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public abstract class BigTableJettySessionManager extends NoSqlSessionManager {
+public class BigTableJettySessionManager extends NoSqlSessionManager {
     private static final int CACHE_MAX_SIZE = 50;
     private static final int CACHE_EXPIRE_MINUTES = 10;
 
@@ -24,10 +24,14 @@ public abstract class BigTableJettySessionManager extends NoSqlSessionManager {
     private final ModelUserContext modelUserContext;
     private final LoadingCache<String, Optional<JettySessionRow>> cache;
 
-    protected BigTableJettySessionManager(ModelSession modelSession) {
+    public BigTableJettySessionManager(ModelSession modelSession) {
+        this(modelSession, modelSession.createModelUserContext());
+    }
+
+    public BigTableJettySessionManager(ModelSession modelSession, ModelUserContext modelUserContext) {
         this.modelSession = modelSession;
         this.jettySessionRepository = new JettySessionRepository(modelSession);
-        this.modelUserContext = this.modelSession.createModelUserContext();
+        this.modelUserContext = modelUserContext;
 
         getModelSession().initializeTable(JettySessionRow.TABLE_NAME, getModelUserContext());
 
