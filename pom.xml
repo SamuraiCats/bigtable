@@ -47,5 +47,6 @@
         <module>bigtable-ui</module>
         <module>bigtable-ui-server</module>
         <module>bigtable-ui-war</module>
+        <module>bigtable-jetty-session-manager</module>
     </modules>
 </project>
