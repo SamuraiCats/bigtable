@@ -1,12 +1,14 @@
 package com.altamiracorp.bigtable.jetty;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.SessionIdManager;
 import org.eclipse.jetty.server.session.AbstractSessionIdManager;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public class BigTableJettySessionIdManager extends AbstractSessionIdManager {
+    public static final Class TYPE = SessionIdManager.class;
 
     private BigTableJettySessionManager sessionManager;
     private Server server;

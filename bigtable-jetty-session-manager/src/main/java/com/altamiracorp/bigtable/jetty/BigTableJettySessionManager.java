@@ -11,11 +11,13 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.eclipse.jetty.nosql.NoSqlSession;
 import org.eclipse.jetty.nosql.NoSqlSessionManager;
+import org.eclipse.jetty.server.SessionManager;
 
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class BigTableJettySessionManager extends NoSqlSessionManager {
+    public static final Class TYPE = SessionManager.class;
     private static final int CACHE_MAX_SIZE = 50;
     private static final int CACHE_EXPIRE_MINUTES = 10;
 
