@@ -9,8 +9,6 @@ import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import org.eclipse.jetty.nosql.NoSqlSession;
-import org.eclipse.jetty.nosql.NoSqlSessionManager;
 import org.eclipse.jetty.server.SessionManager;
 
 import java.util.Set;
