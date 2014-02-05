@@ -273,7 +273,8 @@ public class AccumuloSession extends ModelSession {
         } catch (AccumuloSecurityException e) {
             throw new RuntimeException(e);
         } catch (TableExistsException e) {
-            throw new RuntimeException(e);
+            // If two threads happen to call initializeTable at the same time there could be a race condition and
+            // it is ok if the table already exists.
         } catch (AccumuloException e) {
             throw new RuntimeException(e);
         }
