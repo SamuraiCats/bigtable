@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -31,9 +32,7 @@ public class AccumuloSession extends ModelSession {
     private static final int ROW_DELETING_ITERATOR_PRIORITY = 7;
 
     private Connector connector;
-    private long maxMemory = 1000000L;
-    private long maxLatency = 1000L;
-    private int maxWriteThreads = 10;
+    private BatchWriterConfig batchWriterConfig = new BatchWriterConfig();
     private boolean autoflush = true;
     private final Map<String, BatchWriter> batchWriters = new HashMap<String, BatchWriter>();
     private final Set<String> rowDeletingIteratorAttachList = new HashSet<String>();
@@ -65,10 +64,13 @@ public class AccumuloSession extends ModelSession {
     }
 
     public AccumuloSession() {
-
+        batchWriterConfig.setMaxLatency(1000L, TimeUnit.MILLISECONDS);
+        batchWriterConfig.setMaxWriteThreads(10);
+        batchWriterConfig.setMaxMemory(1000000L);
     }
 
     public AccumuloSession(Connector connector, boolean autoflush) {
+        this();
         this.connector = connector;
         this.autoflush = autoflush;
     }
@@ -306,7 +308,7 @@ public class AccumuloSession extends ModelSession {
         // entry with a delete marker. Using the iterator marks a whole row with
         // a single mutation.
         try {
-            BatchWriter writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+            BatchWriter writer = connector.createBatchWriter(tableName, this.batchWriterConfig);
             try {
                 Mutation mutation = new Mutation(rowKey.toString());
                 mutation.put(new byte[0], new byte[0], RowDeletingIterator.DELETE_ROW_VALUE.get());
@@ -356,7 +358,8 @@ public class AccumuloSession extends ModelSession {
     @Override
     public void close() {
         flush();
-        for (Map.Entry<String, BatchWriter> writer : this.batchWriters.entrySet()) {
+        ArrayList<Map.Entry<String, BatchWriter>> localBatchWriters = createCopyOfBatchWriters();
+        for (Map.Entry<String, BatchWriter> writer : localBatchWriters) {
             try {
                 writer.getValue().close();
             } catch (MutationsRejectedException e) {
@@ -365,9 +368,18 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
+    private ArrayList<Map.Entry<String, BatchWriter>> createCopyOfBatchWriters() {
+        ArrayList<Map.Entry<String, BatchWriter>> localBatchWriters;
+        synchronized (this.batchWriters) {
+            localBatchWriters = new ArrayList<Map.Entry<String, BatchWriter>>(this.batchWriters.entrySet());
+        }
+        return localBatchWriters;
+    }
+
     @Override
     public void flush() {
-        for (Map.Entry<String, BatchWriter> writer : this.batchWriters.entrySet()) {
+        ArrayList<Map.Entry<String, BatchWriter>> localBatchWriters = createCopyOfBatchWriters();
+        for (Map.Entry<String, BatchWriter> writer : localBatchWriters) {
             try {
                 writer.getValue().flush();
             } catch (MutationsRejectedException e) {
@@ -389,7 +401,7 @@ public class AccumuloSession extends ModelSession {
             synchronized (this.batchWriters) {
                 BatchWriter writer = this.batchWriters.get(tableName);
                 if (writer == null) {
-                    writer = connector.createBatchWriter(tableName, getMaxMemory(), getMaxLatency(), getMaxWriteThreads());
+                    writer = connector.createBatchWriter(tableName, this.batchWriterConfig);
                     this.batchWriters.put(tableName, writer);
                 }
                 return writer;
@@ -397,30 +409,6 @@ public class AccumuloSession extends ModelSession {
         } catch (TableNotFoundException e) {
             throw new RuntimeException("Could not find table: " + tableName);
         }
-    }
-
-    public long getMaxMemory() {
-        return maxMemory;
-    }
-
-    public void setMaxMemory(long maxMemory) {
-        this.maxMemory = maxMemory;
-    }
-
-    public long getMaxLatency() {
-        return maxLatency;
-    }
-
-    public void setMaxLatency(long maxLatency) {
-        this.maxLatency = maxLatency;
-    }
-
-    public int getMaxWriteThreads() {
-        return maxWriteThreads;
-    }
-
-    public void setMaxWriteThreads(int maxWriteThreads) {
-        this.maxWriteThreads = maxWriteThreads;
     }
 
     public static Mutation createMutationFromRow(Row row) {
