@@ -1,11 +1,22 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import com.altamiracorp.bigtable.model.ColumnFamily;
-import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.RowKey;
-import com.altamiracorp.bigtable.model.Value;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
-import org.apache.accumulo.core.client.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.RowIterator;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockConnector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -20,12 +31,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.*;
+import com.altamiracorp.bigtable.model.ColumnFamily;
+import com.altamiracorp.bigtable.model.Row;
+import com.altamiracorp.bigtable.model.RowKey;
+import com.altamiracorp.bigtable.model.Value;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 
 
 @RunWith(JUnit4.class)
@@ -157,16 +167,22 @@ public class AccumuloSessionTest {
         mutation.put("testColumnFamily1", "1testColumn1", "1testValue1");
         writer.addMutation(mutation);
 
-        mutation = new Mutation("testRowKey2");
-        mutation.put("testColumnFamily1", "1testColumn1", "1testValue1");
+        mutation = new Mutation("testRow2");
+        mutation.put("testColumnFamily1", "1testColumn1", "2testValue2");
+        writer.addMutation(mutation);
+
+        mutation = new Mutation("testRowKeyzSample");
+        mutation.put("testColumnFamily1", "1testColumn1", "3testValue3");
         writer.addMutation(mutation);
         writer.close();
 
         List<Row> row = toList(accumuloSession.findByRowStartsWith(TEST_TABLE_NAME, "testRowKey", queryUser));
         assertEquals(2, row.size());
 
+
+        // Ensure that only two of the three row keys are returned
         assertEquals("testRowKey1", row.get(0).getRowKey().toString());
-        assertEquals("testRowKey2", row.get(1).getRowKey().toString());
+        assertEquals("testRowKeyzSample", row.get(1).getRowKey().toString());
     }
 
     @Test
@@ -234,12 +250,12 @@ public class AccumuloSessionTest {
 
         accumuloSession.save(row, queryUser);
 
-        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", this.queryUser);
+        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNotNull("row should exist", row);
 
-        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"), this.queryUser);
+        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"), queryUser);
 
-        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", this.queryUser);
+        row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNull("row should be deleted", row);
     }
 }

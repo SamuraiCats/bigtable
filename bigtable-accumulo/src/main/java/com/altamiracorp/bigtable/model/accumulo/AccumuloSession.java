@@ -1,10 +1,27 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import com.altamiracorp.bigtable.model.*;
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
-import org.apache.accumulo.core.client.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.BatchWriterConfig;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.RowIterator;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -17,8 +34,14 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import com.altamiracorp.bigtable.model.Column;
+import com.altamiracorp.bigtable.model.ColumnFamily;
+import com.altamiracorp.bigtable.model.FlushFlag;
+import com.altamiracorp.bigtable.model.ModelSession;
+import com.altamiracorp.bigtable.model.Row;
+import com.altamiracorp.bigtable.model.RowKey;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -52,11 +75,11 @@ public class AccumuloSession extends ModelSession {
 
             String username = (String) properties.get(ACCUMULO_USER);
             String password = (String) properties.get(ACCUMULO_PASSWORD);
-            this.connector = zk.getConnector(username, new PasswordToken(password));
+            connector = zk.getConnector(username, new PasswordToken(password));
 
             Object autoflushObj = properties.get(CONFIG_AUTOFLUSH);
             if (autoflushObj != null) {
-                this.autoflush = Boolean.getBoolean(autoflushObj.toString());
+                autoflush = Boolean.getBoolean(autoflushObj.toString());
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -90,7 +113,7 @@ public class AccumuloSession extends ModelSession {
     private void flush(BatchWriter writer, FlushFlag flushFlag) throws MutationsRejectedException {
         switch (flushFlag) {
             case DEFAULT:
-                if (this.autoflush) {
+                if (autoflush) {
                     writer.flush();
                 }
                 break;
@@ -115,7 +138,7 @@ public class AccumuloSession extends ModelSession {
             for (Row row : rows) {
                 AccumuloHelper.addRowToWriter(writer, row);
             }
-            if (this.autoflush) {
+            if (autoflush) {
                 writer.flush();
             }
         } catch (MutationsRejectedException e) {
@@ -126,20 +149,26 @@ public class AccumuloSession extends ModelSession {
     @Override
     public Iterable<Row> findByRowKeyRange(String tableName, String rowKeyStart, String rowKeyEnd, ModelUserContext user) {
         LOGGER.trace("findByRowKeyRange called with parameters: tableName=?, rowKeyStart=?, rowKeyEnd=?, user=?", tableName, rowKeyStart, rowKeyEnd, user);
-        try {
-            Scanner scanner = createScanner(tableName, user);
-            if (rowKeyStart != null) {
-                scanner.setRange(new Range(rowKeyStart, rowKeyEnd));
-            }
-            return AccumuloHelper.scannerToRows(tableName, scanner);
-        } catch (TableNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+
+        return scanTableRange(tableName, new Range(rowKeyStart, rowKeyEnd), user);
     }
 
     @Override
     public Iterable<Row> findByRowStartsWith(String tableName, String rowKeyPrefix, ModelUserContext user) {
-        return findByRowKeyRange(tableName, rowKeyPrefix, rowKeyPrefix + "ZZZZ", user); // TODO is this the best way?
+        LOGGER.trace(String.format("Scanning table (%s) key range with prefix: %s", tableName, rowKeyPrefix));
+
+        return scanTableRange(tableName, Range.prefix(rowKeyPrefix), user);
+    }
+
+    private Iterable<Row> scanTableRange(final String tableName, final Range scannerRange, final ModelUserContext user) {
+        try {
+            final Scanner scanner = createScanner(tableName, user);
+            scanner.setRange(scannerRange);
+
+            return AccumuloHelper.scannerToRows(tableName, scanner);
+        } catch (TableNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -211,7 +240,7 @@ public class AccumuloSession extends ModelSession {
     private Scanner createScanner(String tableName, ModelUserContext user) throws TableNotFoundException {
         ensureRowDeletingIteratorIsAttached(tableName);
 
-        Scanner scanner = this.connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
+        Scanner scanner = connector.createScanner(tableName, ((AccumuloUserContext) user).getAuthorizations());
         IteratorSetting iteratorSetting = new IteratorSetting(
                 100,
                 RowDeletingIterator.class.getSimpleName(),
@@ -228,8 +257,8 @@ public class AccumuloSession extends ModelSession {
             }
 
             IteratorSetting is = new IteratorSetting(ROW_DELETING_ITERATOR_PRIORITY, ROW_DELETING_ITERATOR_NAME, RowDeletingIterator.class);
-            if (!this.connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
-                this.connector.tableOperations().attachIterator(tableName, is);
+            if (!connector.tableOperations().listIterators(tableName).containsKey(ROW_DELETING_ITERATOR_NAME)) {
+                connector.tableOperations().attachIterator(tableName, is);
             }
             rowDeletingIteratorAttachList.add(tableName);
         } catch (Exception e) {
@@ -308,12 +337,12 @@ public class AccumuloSession extends ModelSession {
         // entry with a delete marker. Using the iterator marks a whole row with
         // a single mutation.
         try {
-            BatchWriter writer = connector.createBatchWriter(tableName, this.batchWriterConfig);
+            BatchWriter writer = connector.createBatchWriter(tableName, batchWriterConfig);
             try {
                 Mutation mutation = new Mutation(rowKey.toString());
                 mutation.put(new byte[0], new byte[0], RowDeletingIterator.DELETE_ROW_VALUE.get());
                 writer.addMutation(mutation);
-                if (this.autoflush) {
+                if (autoflush) {
                     writer.flush();
                 }
             } catch (AccumuloException ae) {
@@ -336,7 +365,7 @@ public class AccumuloSession extends ModelSession {
             Mutation mutation = createMutationFromRow(row);
             mutation.putDelete(new Text(columnFamily), new Text(columnQualifier));
             writer.addMutation(mutation);
-            if (this.autoflush) {
+            if (autoflush) {
                 writer.flush();
                 connector.tableOperations().flush(tableName, null, null, true);
             }
@@ -352,7 +381,7 @@ public class AccumuloSession extends ModelSession {
     @Override
     public List<String> getTableList(ModelUserContext user) {
         LOGGER.trace("getTableList called with parameters: user=?", user);
-        return new ArrayList<String>(this.connector.tableOperations().list());
+        return new ArrayList<String>(connector.tableOperations().list());
     }
 
     @Override
@@ -370,8 +399,8 @@ public class AccumuloSession extends ModelSession {
 
     private ArrayList<Map.Entry<String, BatchWriter>> createCopyOfBatchWriters() {
         ArrayList<Map.Entry<String, BatchWriter>> localBatchWriters;
-        synchronized (this.batchWriters) {
-            localBatchWriters = new ArrayList<Map.Entry<String, BatchWriter>>(this.batchWriters.entrySet());
+        synchronized (batchWriters) {
+            localBatchWriters = new ArrayList<Map.Entry<String, BatchWriter>>(batchWriters.entrySet());
         }
         return localBatchWriters;
     }
@@ -398,11 +427,11 @@ public class AccumuloSession extends ModelSession {
 
     private BatchWriter getBatchWriter(String tableName) {
         try {
-            synchronized (this.batchWriters) {
-                BatchWriter writer = this.batchWriters.get(tableName);
+            synchronized (batchWriters) {
+                BatchWriter writer = batchWriters.get(tableName);
                 if (writer == null) {
-                    writer = connector.createBatchWriter(tableName, this.batchWriterConfig);
-                    this.batchWriters.put(tableName, writer);
+                    writer = connector.createBatchWriter(tableName, batchWriterConfig);
+                    batchWriters.put(tableName, writer);
                 }
                 return writer;
             }
