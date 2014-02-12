@@ -411,6 +411,10 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
+    public Connector getConnector() {
+        return connector;
+    }
+
     public static Mutation createMutationFromRow(Row row) {
         LOGGER.trace("createMutationFromRow called with parameters: row=?", row);
         Mutation mutation = null;
