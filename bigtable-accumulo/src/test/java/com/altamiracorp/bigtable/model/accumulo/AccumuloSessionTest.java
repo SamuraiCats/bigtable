@@ -186,6 +186,25 @@ public class AccumuloSessionTest {
     }
 
     @Test
+    public void testFindAll () throws TableNotFoundException, MutationsRejectedException {
+        BatchWriter writer = connector.createBatchWriter(TEST_TABLE_NAME, maxMemory, maxLatency, maxWriteThreads);
+
+        List<Row> rows = toList(accumuloSession.findAll(TEST_TABLE_NAME, queryUser));
+        assertEquals(0, rows.size());
+
+        Mutation mutation = new Mutation("testRowKey1");
+        mutation.put("testColumnFamily1", "testColumn1", "testValue1");
+        writer.addMutation(mutation);
+
+        mutation = new Mutation("testRowKey2");
+        mutation.put("testColumnFamily2", "testColumn2", "testValue2");
+        writer.addMutation(mutation);
+
+        rows = toList(accumuloSession.findAll(TEST_TABLE_NAME, queryUser));
+        assertEquals(2, rows.size());
+    }
+
+    @Test
     public void testFindByRowKeyRange() throws TableNotFoundException, MutationsRejectedException {
         BatchWriter writer = connector.createBatchWriter(TEST_TABLE_NAME, maxMemory, maxLatency, maxWriteThreads);
 

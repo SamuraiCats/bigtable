@@ -42,7 +42,7 @@ public abstract class Repository<T extends Row> {
     }
 
     public Iterable<T> findAll(ModelUserContext user) {
-        return fromRows(modelSession.findByRowStartsWith(getTableName(), null, user));
+        return fromRows(modelSession.findAll(getTableName(), user));
     }
 
     public void save(T obj, ModelUserContext user) {
