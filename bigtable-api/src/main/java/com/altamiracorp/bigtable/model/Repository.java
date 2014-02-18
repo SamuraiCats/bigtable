@@ -45,16 +45,16 @@ public abstract class Repository<T extends Row> {
         return fromRows(modelSession.findAll(getTableName(), user));
     }
 
-    public void save(T obj, ModelUserContext user) {
-        save(obj, FlushFlag.DEFAULT, user);
+    public void save(T obj) {
+        save(obj, FlushFlag.DEFAULT);
     }
 
-    public void save(T obj, FlushFlag flushFlag, ModelUserContext user) {
+    public void save(T obj, FlushFlag flushFlag) {
         Row r = toRow(obj);
-        modelSession.save(r, flushFlag, user);
+        modelSession.save(r, flushFlag);
     }
 
-    public void saveMany(Collection<T> objs, ModelUserContext user) {
+    public void saveMany(Collection<T> objs) {
         List<Row> rows = new ArrayList<Row>();
         String tableName = null;
         for (T obj : objs) {
@@ -64,7 +64,7 @@ public abstract class Repository<T extends Row> {
             }
             rows.add(row);
         }
-        modelSession.saveMany(tableName, rows, user);
+        modelSession.saveMany(tableName, rows);
     }
 
     public Iterable<T> fromRows(final Iterable<Row> rows) {

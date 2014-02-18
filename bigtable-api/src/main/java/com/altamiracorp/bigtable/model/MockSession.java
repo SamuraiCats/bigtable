@@ -14,7 +14,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void save(Row row, FlushFlag flushFlag, ModelUserContext user) {
+    public void save(Row row, FlushFlag flushFlag) {
         List<Row> table = tables.get(row.getTableName());
         if (table == null) {
             throw new NullPointerException("Could not find table with name: " + row.getTableName());
@@ -23,9 +23,9 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void saveMany(String tableName, Collection<Row> rows, ModelUserContext user) {
+    public void saveMany(String tableName, Collection<Row> rows) {
         for (Row r : rows) {
-            save(r, user);
+            save(r);
         }
     }
 

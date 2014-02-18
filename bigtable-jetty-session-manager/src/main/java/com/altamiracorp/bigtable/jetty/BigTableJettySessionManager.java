@@ -99,7 +99,7 @@ public class BigTableJettySessionManager extends NoSqlSessionManager {
                 data.setObject(name, session.getAttribute(name));
             }
 
-            jettySessionRepository.save(row, FlushFlag.FLUSH, getModelUserContext());
+            jettySessionRepository.save(row, FlushFlag.FLUSH);
         } else {
             // invalid session
             jettySessionRepository.delete(new JettySessionRowKey(session.getClusterId()), getModelUserContext());
@@ -139,7 +139,7 @@ public class BigTableJettySessionManager extends NoSqlSessionManager {
         setData(session, row.getData());
 
         row.getMetadata().setAccessed(System.currentTimeMillis());
-        jettySessionRepository.save(row, getModelUserContext());
+        jettySessionRepository.save(row);
 
         session.didActivate();
 

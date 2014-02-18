@@ -15,10 +15,9 @@ public abstract class ModelSession {
      * Save a row
      *
      * @param row
-     * @param user
      */
-    public void save(Row row, ModelUserContext user) {
-        save(row, FlushFlag.DEFAULT, user);
+    public void save(Row row) {
+        save(row, FlushFlag.DEFAULT);
     }
 
     /**
@@ -26,18 +25,16 @@ public abstract class ModelSession {
      *
      * @param row
      * @param flushFlag
-     * @param user
      */
-    public abstract void save(Row row, FlushFlag flushFlag, ModelUserContext user);
+    public abstract void save(Row row, FlushFlag flushFlag);
 
     /**
      * Save a collection of rows
      *
      * @param tableName
      * @param rows
-     * @param user
      */
-    public abstract void saveMany(String tableName, Collection<Row> rows, ModelUserContext user);
+    public abstract void saveMany(String tableName, Collection<Row> rows);
 
     /**
      * Find rows in a range of specified row keys

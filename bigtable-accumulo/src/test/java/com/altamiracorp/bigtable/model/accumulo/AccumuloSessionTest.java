@@ -1,23 +1,8 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.altamiracorp.bigtable.model.*;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.RowIterator;
-import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableNotFoundException;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mock.MockConnector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -32,7 +17,12 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
 
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 
 @RunWith(JUnit4.class)
@@ -80,7 +70,7 @@ public class AccumuloSessionTest {
         columnFamily2.set("2testColumn3", 222L);
         row.addColumnFamily(columnFamily2);
 
-        accumuloSession.save(row, queryUser);
+        accumuloSession.save(row);
 
         Scanner scanner = connector.createScanner(TEST_TABLE_NAME, authorizations);
         scanner.setRange(new Range("testRowKey1"));
@@ -185,7 +175,7 @@ public class AccumuloSessionTest {
     }
 
     @Test
-    public void testFindAll () throws TableNotFoundException, MutationsRejectedException {
+    public void testFindAll() throws TableNotFoundException, MutationsRejectedException {
         BatchWriter writer = connector.createBatchWriter(TEST_TABLE_NAME, maxMemory, maxLatency, maxWriteThreads);
 
         List<Row> rows = toList(accumuloSession.findAll(TEST_TABLE_NAME, queryUser));
@@ -266,7 +256,7 @@ public class AccumuloSessionTest {
         columnFamily1.set("1testColumn1", "1testColumn1Value");
         row.addColumnFamily(columnFamily1);
 
-        accumuloSession.save(row, queryUser);
+        accumuloSession.save(row);
 
         row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNotNull("row should exist", row);
@@ -287,7 +277,7 @@ public class AccumuloSessionTest {
         columnFamily.addColumn(new Column("testColumn3", new Value("testValue3"), "A"));
         row.addColumnFamily(columnFamily);
 
-        accumuloSession.save(row, adminUser);
+        accumuloSession.save(row);
 
         Row adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
         ColumnFamily adminQueryColumnFamily = adminQueryRow.get("testColumnFamily1");
@@ -308,7 +298,7 @@ public class AccumuloSessionTest {
         columnFamily.set("testColumn3", new Value("testValue3"), "A");
         row.addColumnFamily(columnFamily);
 
-        accumuloSession.save(row, adminUser);
+        accumuloSession.save(row);
 
         Row adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
         ColumnFamily adminQueryColumnFamily = adminQueryRow.get("testColumnFamily1");
