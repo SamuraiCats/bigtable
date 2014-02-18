@@ -34,6 +34,14 @@ public class ColumnFamily {
         return column.getValue();
     }
 
+    public Column getColumn (String columnName) {
+        Column column = this.columns.get(columnName);
+        if (column == null) {
+            return null;
+        }
+        return column;
+    }
+
     public ColumnFamily set(String columnName, Object value) {
         addColumn(new Column(columnName, value));
         return this;
