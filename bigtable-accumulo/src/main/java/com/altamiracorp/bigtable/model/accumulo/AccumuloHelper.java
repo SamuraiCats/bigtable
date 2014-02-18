@@ -50,8 +50,8 @@ public class AccumuloHelper {
     }
 
     private static void addColumnDeleteToMutation(Mutation mutation, Column column, String columnFamilyName) {
-        if (column instanceof AccumuloColumn && ((AccumuloColumn) column).getColumnVisibility() != null) {
-            mutation.putDelete(columnFamilyName, column.getName(), ((AccumuloColumn) column).getColumnVisibility());
+        if (column.getVisibility() != null) {
+            mutation.putDelete(columnFamilyName, column.getName(), new ColumnVisibility(column.getVisibility()));
         } else {
             mutation.putDelete(columnFamilyName, column.getName());
         }
@@ -64,8 +64,8 @@ public class AccumuloHelper {
             value = new Value(v.toBytes());
         }
 
-        if (column instanceof AccumuloColumn && ((AccumuloColumn) column).getColumnVisibility() != null) {
-            mutation.put(columnFamilyName, column.getName(), ((AccumuloColumn) column).getColumnVisibility(), value);
+        if (column.getVisibility() != null) {
+            mutation.put(columnFamilyName, column.getName(), new ColumnVisibility(column.getVisibility()), value);
         } else {
             mutation.put(columnFamilyName, column.getName(), value);
         }
@@ -112,7 +112,7 @@ public class AccumuloHelper {
 
         while (iterator.hasNext() && count < colFamOffset + colFamLimit &&
                 iterator.peek().getKey().getRow().toString().equals(rowKey)) {
-            AccumuloColumnFamily colFam = getNextColumnFamily(iterator);
+                ColumnFamily colFam = getNextColumnFamily(iterator);
 
             if (count >= colFamOffset) {
                 colFams.add(colFam);
@@ -124,14 +124,14 @@ public class AccumuloHelper {
         return colFams;
     }
 
-    public static AccumuloColumnFamily getNextColumnFamily(PeekingIterator<Map.Entry<Key, Value>> iterator) {
+    public static ColumnFamily getNextColumnFamily(PeekingIterator<Map.Entry<Key, Value>> iterator) {
         String colFamName = iterator.peek().getKey().getColumnFamily().toString();
-        AccumuloColumnFamily colFam = new AccumuloColumnFamily(colFamName);
+        ColumnFamily colFam = new ColumnFamily(colFamName);
 
         while (iterator.peek() != null && iterator.peek().getKey().getColumnFamily().toString().equals(colFamName)) {
             System.out.println(iterator.peek());
             Map.Entry<Key, Value> next = iterator.next();
-            colFam.addColumn(new AccumuloColumn(next.getKey().getColumnQualifier().toString(), next.getValue().toString(), new ColumnVisibility(next.getKey().getColumnVisibility())));
+            colFam.addColumn(new Column(next.getKey().getColumnQualifier().toString(), next.getValue().toString(), next.getKey().getColumnVisibility().toString()));
         }
 
         return colFam;
@@ -146,14 +146,14 @@ public class AccumuloHelper {
                 row = new Row<RowKey>(tableName, new RowKey(rowKey));
             }
             String columnFamilyString = accumuloColumn.getKey().getColumnFamily().toString();
-            AccumuloColumnFamily columnFamily = row.get(columnFamilyString);
+            ColumnFamily columnFamily = row.get(columnFamilyString);
             if (columnFamily == null) {
-                row.addColumnFamily(new AccumuloColumnFamily(columnFamilyString));
+                row.addColumnFamily(new ColumnFamily(columnFamilyString));
                 columnFamily = row.get(columnFamilyString);
             }
 
             String columnNameString = accumuloColumn.getKey().getColumnQualifier().toString();
-            columnFamily.set(columnNameString, accumuloValueToObject(accumuloColumn.getValue()), new ColumnVisibility(accumuloColumn.getKey().getColumnVisibility()));
+            columnFamily.set(columnNameString, accumuloValueToObject(accumuloColumn.getValue()), accumuloColumn.getKey().getColumnVisibility().toString());
         }
         row.setDirtyBits(false);
         return row;

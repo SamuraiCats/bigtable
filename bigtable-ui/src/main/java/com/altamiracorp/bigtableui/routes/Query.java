@@ -1,7 +1,6 @@
 package com.altamiracorp.bigtableui.routes;
 
 import com.altamiracorp.bigtable.model.*;
-import com.altamiracorp.bigtable.model.accumulo.AccumuloColumn;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtableui.BigTableRepository;
 import com.altamiracorp.bigtableui.util.StringEscapeUtils;
@@ -115,12 +114,8 @@ public class Query extends BaseRequestHandler {
         JSONObject result = new JSONObject();
         result.put("value", new String(v));
         result.put("length", value.toBytes().length);
-        if (column instanceof AccumuloColumn) {
-            AccumuloColumn accumuloColumn = (AccumuloColumn) column;
-            String columnVisibility = accumuloColumn.getColumnVisibility().toString();
-            if (!columnVisibility.equals("[]")) {
-                result.put("visibility", columnVisibility);
-            }
+        if (column.getVisibility() != null && !column.getVisibility().equals("[]")) {
+            result.put("visibility", column.getVisibility());
         }
         return result;
     }

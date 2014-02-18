@@ -3,12 +3,19 @@ package com.altamiracorp.bigtable.model;
 public class Column {
     private final String name;
     private final Value value;
+    private String visibility;
     private boolean dirty;
     private boolean delete;
 
     public Column(String name, Object value) {
         this.name = name;
         this.value = new Value(value);
+    }
+
+    public Column(String name, Object value, String visibility) {
+        this.name = name;
+        this.value = new Value(value);
+        this.visibility = visibility;
     }
 
     public String getName() {
@@ -18,6 +25,8 @@ public class Column {
     public Value getValue() {
         return this.value;
     }
+
+    public String getVisibility () { return this.visibility; }
 
     public boolean isDirty() {
         return dirty;

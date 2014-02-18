@@ -39,6 +39,11 @@ public class ColumnFamily {
         return this;
     }
 
+    public ColumnFamily set (String columnName, Object value, String visibility) {
+        addColumn(new Column(columnName, value, visibility));
+        return this;
+    }
+
     public String getColumnFamilyName() {
         return this.columnFamilyName;
     }

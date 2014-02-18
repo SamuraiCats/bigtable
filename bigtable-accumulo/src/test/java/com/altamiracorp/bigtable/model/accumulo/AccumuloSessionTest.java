@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.altamiracorp.bigtable.model.*;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -31,10 +32,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
 
-import com.altamiracorp.bigtable.model.ColumnFamily;
-import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.RowKey;
-import com.altamiracorp.bigtable.model.Value;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 
 
@@ -49,6 +46,7 @@ public class AccumuloSessionTest {
     private long maxLatency = 1000L;
     private int maxWriteThreads = 10;
     private AccumuloUserContext queryUser;
+    private AccumuloUserContext adminUser;
 
     @Before
     public void before() throws AccumuloSecurityException, AccumuloException {
@@ -59,6 +57,7 @@ public class AccumuloSessionTest {
 
         authorizations = new Authorizations("ALL");
         queryUser = new AccumuloUserContext(authorizations);
+        adminUser = new AccumuloUserContext(new Authorizations("A", "B"));
 
         accumuloSession = new AccumuloSession(connector, true);
         accumuloSession.initializeTable(TEST_TABLE_NAME, queryUser);
@@ -276,5 +275,47 @@ public class AccumuloSessionTest {
 
         row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNull("row should be deleted", row);
+    }
+
+    @Test
+    public void testColumnVisibility() {
+        AccumuloUserContext queryUserWithAuth = new AccumuloUserContext(new Authorizations("B"));
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
+        columnFamily.set("testColumn1", "testValue1");
+        columnFamily.addColumn(new Column("testColumn2", new Value("testValue2"), "A|B"));
+        columnFamily.addColumn(new Column("testColumn3", new Value("testValue3"), "A"));
+        row.addColumnFamily(columnFamily);
+
+        accumuloSession.save(row, adminUser);
+
+        Row adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
+        ColumnFamily adminQueryColumnFamily = adminQueryRow.get("testColumnFamily1");
+        assertEquals(3, adminQueryColumnFamily.getColumns().size());
+
+        Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUserWithAuth);
+        ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
+        assertEquals(2, staffQueryColumnFamily.getColumns().size());
+    }
+
+    @Test
+    public void testSetWithColumnVisibility() {
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        AccumuloUserContext queryUserWithAuth = new AccumuloUserContext(new Authorizations("B"));
+        ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
+        columnFamily.set("testColumn1", "testValue1");
+        columnFamily.set("testColumn2", new Value("testValue2"), "A|B");
+        columnFamily.set("testColumn3", new Value("testValue3"), "A");
+        row.addColumnFamily(columnFamily);
+
+        accumuloSession.save(row, adminUser);
+
+        Row adminQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", adminUser);
+        ColumnFamily adminQueryColumnFamily = adminQueryRow.get("testColumnFamily1");
+        assertEquals(3, adminQueryColumnFamily.getColumns().size());
+
+        Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUserWithAuth);
+        ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
+        assertEquals(2, staffQueryColumnFamily.getColumns().size());
     }
 }
