@@ -1,10 +1,27 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import com.altamiracorp.bigtable.model.*;
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
-import org.apache.accumulo.core.client.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.BatchWriterConfig;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.IteratorSetting;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.RowIterator;
 import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableExistsException;
+import org.apache.accumulo.core.client.TableNotFoundException;
+import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -17,8 +34,16 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import com.altamiracorp.bigtable.model.Column;
+import com.altamiracorp.bigtable.model.ColumnFamily;
+import com.altamiracorp.bigtable.model.FlushFlag;
+import com.altamiracorp.bigtable.model.ModelSession;
+import com.altamiracorp.bigtable.model.Row;
+import com.altamiracorp.bigtable.model.RowKey;
+import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
+import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -75,6 +100,10 @@ public class AccumuloSession extends ModelSession {
         this.autoflush = autoflush;
     }
 
+    /**
+     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations
+     * @throws TableDoesNotExistException Thrown if an Accumulo writer cannot be setup for the row's table
+     */
     @Override
     public void save(Row row, FlushFlag flushFlag) {
         LOGGER.trace("save called with parameters: row=?", row);
@@ -83,7 +112,7 @@ public class AccumuloSession extends ModelSession {
             AccumuloHelper.addRowToWriter(writer, row);
             flush(writer, flushFlag);
         } catch (MutationsRejectedException e) {
-            throw new RuntimeException(e);
+            throw new MutationsWriteException("Error occured when writing mutation", e);
         }
     }
 
@@ -104,6 +133,10 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
+    /**
+     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations
+     * @throws TableDoesNotExistException Thrown if an Accumulo writer cannot be setup for the row's table
+     */
     @Override
     public void saveMany(String tableName, Collection<Row> rows) {
         LOGGER.trace("saveMany called with parameters: tableName=?, rows=?", tableName, rows);
@@ -119,7 +152,7 @@ public class AccumuloSession extends ModelSession {
                 writer.flush();
             }
         } catch (MutationsRejectedException e) {
-            throw new RuntimeException(e);
+            throw new MutationsWriteException("Error occured while writing batch of mutations", e);
         }
     }
 
@@ -361,6 +394,9 @@ public class AccumuloSession extends ModelSession {
         return new ArrayList<String>(connector.tableOperations().list());
     }
 
+    /**
+     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations while closing
+     */
     @Override
     public void close() {
         flush();
@@ -369,7 +405,7 @@ public class AccumuloSession extends ModelSession {
             try {
                 writer.getValue().close();
             } catch (MutationsRejectedException e) {
-                throw new RuntimeException("Could not close writer for table: " + writer.getKey());
+                throw new MutationsWriteException("Could not close writer for table: " + writer.getKey(), e);
             }
         }
     }
@@ -382,6 +418,9 @@ public class AccumuloSession extends ModelSession {
         return localBatchWriters;
     }
 
+    /**
+     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations while flushing
+     */
     @Override
     public void flush() {
         ArrayList<Map.Entry<String, BatchWriter>> localBatchWriters = createCopyOfBatchWriters();
@@ -389,7 +428,7 @@ public class AccumuloSession extends ModelSession {
             try {
                 writer.getValue().flush();
             } catch (MutationsRejectedException e) {
-                throw new RuntimeException("Could not close writer for table: " + writer.getKey());
+                throw new MutationsWriteException("Could not flush writer for table: " + writer.getKey(), e);
             }
         }
     }
@@ -413,7 +452,7 @@ public class AccumuloSession extends ModelSession {
                 return writer;
             }
         } catch (TableNotFoundException e) {
-            throw new RuntimeException("Could not find table: " + tableName);
+            throw new TableDoesNotExistException("Could not find table: " + tableName, e);
         }
     }
 

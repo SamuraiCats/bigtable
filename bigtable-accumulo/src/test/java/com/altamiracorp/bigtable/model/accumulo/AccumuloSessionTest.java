@@ -1,12 +1,38 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import com.altamiracorp.bigtable.model.*;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
-import org.apache.accumulo.core.client.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.client.BatchWriterConfig;
+import org.apache.accumulo.core.client.Connector;
+import org.apache.accumulo.core.client.MutationsRejectedException;
+import org.apache.accumulo.core.client.RowIterator;
+import org.apache.accumulo.core.client.Scanner;
+import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockConnector;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.SecurityErrorCode;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.data.ConstraintViolationSummary;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.KeyExtent;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.security.Authorizations;
@@ -14,18 +40,25 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import com.altamiracorp.bigtable.model.Column;
+import com.altamiracorp.bigtable.model.ColumnFamily;
+import com.altamiracorp.bigtable.model.Row;
+import com.altamiracorp.bigtable.model.RowKey;
+import com.altamiracorp.bigtable.model.Value;
+import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
+import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import com.beust.jcommander.internal.Lists;
+import com.beust.jcommander.internal.Maps;
 
-import static org.junit.Assert.*;
-
-
-@RunWith(JUnit4.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(AccumuloHelper.class)
 public class AccumuloSessionTest {
     private static final String TEST_TABLE_NAME = "testTable";
     private AccumuloSession accumuloSession;
@@ -37,6 +70,8 @@ public class AccumuloSessionTest {
     private int maxWriteThreads = 10;
     private AccumuloUserContext queryUser;
     private AccumuloUserContext adminUser;
+
+    private static final Row TEST_ROW = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("foobar"));
 
     @Before
     public void before() throws AccumuloSecurityException, AccumuloException {
@@ -51,6 +86,70 @@ public class AccumuloSessionTest {
 
         accumuloSession = new AccumuloSession(connector, true);
         accumuloSession.initializeTable(TEST_TABLE_NAME, queryUser);
+    }
+
+    @Test(expected = MutationsWriteException.class)
+    public void testSaveThrowsMutationsWriteException() throws MutationsRejectedException {
+        setupMutationsRejectedException();
+
+        accumuloSession.save(TEST_ROW);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSaveNullRow() {
+        accumuloSession.save(null);
+    }
+
+    @Test(expected = TableDoesNotExistException.class)
+    public void testSaveThrowsTableDoesNotExistException() throws Exception {
+        final Connector mockConnector = mock(Connector.class);
+        final AccumuloSession session = new AccumuloSession(mockConnector, true);
+
+        when(mockConnector.createBatchWriter(anyString(), any(BatchWriterConfig.class))).thenThrow(new TableNotFoundException("Id", TEST_TABLE_NAME, "Not found"));
+
+        session.save(TEST_ROW);
+    }
+
+    @Test(expected = MutationsWriteException.class)
+    public void testFlushThrowsMutationsWriteException() throws Exception {
+        final Connector mockConnector = mock(Connector.class);
+        final BatchWriter mockWriter = mock(BatchWriter.class);
+
+        final AccumuloSession session = new AccumuloSession(mockConnector, true);
+        final MutationsRejectedException mutationException = createMutationsException();
+
+        doThrow(mutationException).when(mockWriter).flush();
+        when(mockConnector.createBatchWriter(anyString(), any(BatchWriterConfig.class))).thenReturn(mockWriter);
+
+        final Map<String, BatchWriter> writers = Maps.newHashMap();
+        writers.put("foo", mockWriter);
+
+        Whitebox.setInternalState(session, "batchWriters", writers);
+        session.flush();
+    }
+
+    @Test(expected = MutationsWriteException.class)
+    public void testSaveManyThrowsMutationsWriteException() throws MutationsRejectedException {
+        setupMutationsRejectedException();
+
+        accumuloSession.saveMany(TEST_TABLE_NAME, Lists.newArrayList(TEST_ROW));
+    }
+
+    private void setupMutationsRejectedException() throws MutationsRejectedException {
+        PowerMockito.mockStatic(AccumuloHelper.class);
+
+        final MutationsRejectedException mutationException = createMutationsException();
+
+        // Setup the static helper method to throw an exception
+        when(AccumuloHelper.addRowToWriter(any(BatchWriter.class), any(Row.class))).thenThrow(mutationException);
+    }
+
+    private MutationsRejectedException createMutationsException() {
+        final List<ConstraintViolationSummary> cvsList = Lists.newArrayList();
+        final Map<KeyExtent,Set<SecurityErrorCode>> authFailuresMap = Maps.newHashMap();
+        final List<String> serverErrorList = Lists.newArrayList();
+
+        return new MutationsRejectedException(cvsList, (HashMap<KeyExtent, Set<SecurityErrorCode>>) authFailuresMap, serverErrorList, -1, new Throwable());
     }
 
     @Test
