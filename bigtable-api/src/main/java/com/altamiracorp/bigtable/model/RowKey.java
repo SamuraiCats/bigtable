@@ -6,13 +6,17 @@ import org.json.JSONObject;
 public class RowKey {
     private final String rowKey;
 
-    public RowKey(String rowKey) {
+    public RowKey(final String rowKey) {
         this.rowKey = rowKey;
     }
 
     @Override
     public String toString() {
-        return this.rowKey;
+        return rowKey;
+    }
+
+    public String getRowKey() {
+        return rowKey;
     }
 
     public JSONObject toJson() {
