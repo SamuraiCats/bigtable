@@ -5,7 +5,7 @@
     <parent>
         <artifactId>bigtable-root</artifactId>
         <groupId>com.altamiracorp.bigtable</groupId>
-        <version>0.2.0</version>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigtable-accumulo</artifactId>
