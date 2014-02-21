@@ -20,7 +20,7 @@
         <dependency>
             <groupId>com.altamiracorp.bigtable</groupId>
             <artifactId>bigtable-ui</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>

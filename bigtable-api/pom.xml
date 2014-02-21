@@ -9,7 +9,6 @@
     </parent>
 
     <artifactId>bigtable-api</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
 
     <name>BigTable: Core API</name>
 
