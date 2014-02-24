@@ -349,7 +349,7 @@ public class AccumuloSessionTest {
     }
 
     @Test
-    public void testDeleteRow() throws TableNotFoundException {
+    public void testDeleteRow() {
         Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
         ColumnFamily columnFamily1 = new ColumnFamily("testColumnFamily1");
         columnFamily1.set("1testColumn1", "1testColumn1Value");
