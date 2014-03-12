@@ -153,4 +153,15 @@ public abstract class ModelSession {
      * @return The new module user context
      */
     public abstract ModelUserContext createModelUserContext(String... authorizations);
+
+    /**
+     * Alters all columns of the provided row to the provided visibility.
+     *
+     * @param row
+     * @param tableName
+     * @param visibility
+     * @param user
+     * @param flushFlag
+     */
+    public abstract void alterAllColumnsVisibility (Row row, String tableName, String visibility, ModelUserContext user, FlushFlag flushFlag);
 }

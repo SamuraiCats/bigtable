@@ -101,7 +101,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     /**
-     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations
+     * @throws MutationsWriteException    Thrown if the Accumulo writer was unable to write mutations
      * @throws TableDoesNotExistException Thrown if an Accumulo writer cannot be setup for the row's table
      */
     @Override
@@ -134,7 +134,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     /**
-     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations
+     * @throws MutationsWriteException    Thrown if the Accumulo writer was unable to write mutations
      * @throws TableDoesNotExistException Thrown if an Accumulo writer cannot be setup for the row's table
      */
     @Override
@@ -494,6 +494,22 @@ public class AccumuloSession extends ModelSession {
         if (properties.get(ZK_SERVER_NAMES) == null) {
             throw new IllegalStateException("Configuration property " + ZK_SERVER_NAMES + " missing!");
         }
+    }
+
+    @Override
+    public void alterAllColumnsVisibility (Row row, String tableName, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+        Row copyRow = new Row(tableName, row.getRowKey());
+        Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
+        for (ColumnFamily columnFamily : columnFamilies) {
+            ColumnFamily copyColumnFamily = new ColumnFamily(columnFamily.getColumnFamilyName());
+            for (Column column : columnFamily.getColumns()) {
+                Column copyColumn = new Column(column.getName(), column.getValue(), visibility);
+                copyColumnFamily.addColumn(copyColumn);
+            }
+            copyRow.addColumnFamily(copyColumnFamily);
+        }
+        deleteRow(tableName, row.getRowKey(), user);
+        save(copyRow, flushFlag);
     }
 
 }

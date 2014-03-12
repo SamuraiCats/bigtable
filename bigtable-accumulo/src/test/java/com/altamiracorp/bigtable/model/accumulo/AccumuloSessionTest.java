@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.altamiracorp.bigtable.model.*;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.BatchWriter;
@@ -46,11 +48,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-import com.altamiracorp.bigtable.model.Column;
-import com.altamiracorp.bigtable.model.ColumnFamily;
-import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.RowKey;
-import com.altamiracorp.bigtable.model.Value;
 import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
 import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
 import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
@@ -406,5 +403,26 @@ public class AccumuloSessionTest {
         Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUserWithAuth);
         ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
         assertEquals(2, staffQueryColumnFamily.getColumns().size());
+    }
+
+    @Test
+    public void testAlterAllColumnsVisibility () {
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        AccumuloUserContext queryUserWithAuthA = new AccumuloUserContext(new Authorizations("A"));
+        AccumuloUserContext queryUserWithAuthB = new AccumuloUserContext(new Authorizations("B"));
+        ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
+        columnFamily.set("testColumn1", new Value("testValue1"), "A");
+        columnFamily.set("testColumn2", new Value("testValue2"), "A");
+        row.addColumnFamily(columnFamily);
+
+        accumuloSession.alterAllColumnsVisibility(row, row.getTableName(), "B", queryUserWithAuthA, FlushFlag.FLUSH);
+        assertNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));
+        Row alteredRow = accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthB);
+        assertNotNull(alteredRow);
+        assertEquals (2, alteredRow.get("testColumnFamily1").getColumns().size());
+
+        accumuloSession.save(row, FlushFlag.FLUSH);
+        assertNotNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));
+        assertNotNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthB));
     }
 }

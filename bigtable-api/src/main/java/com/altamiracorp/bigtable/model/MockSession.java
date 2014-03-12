@@ -161,4 +161,20 @@ public class MockSession extends ModelSession {
     public ModelUserContext createModelUserContext(String... authorizations) {
         return new MockModelUserContext();
     }
+
+    @Override
+    public void alterAllColumnsVisibility (Row row, String tableName, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+        Row copyRow = new Row (tableName, row.getRowKey());
+        List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
+        for (ColumnFamily columnFamily : columnFamilies) {
+            ColumnFamily copyColumnFamily = new ColumnFamily(columnFamily.getColumnFamilyName());
+            for (Column column : columnFamily.getColumns()) {
+                Column copyColumn = new Column(column.getName(), column.getValue(), visibility);
+                copyColumnFamily.addColumn(copyColumn);
+            }
+            copyRow.addColumnFamily(copyColumnFamily);
+        }
+        deleteRow(tableName, row.getRowKey(), user);
+        save(copyRow, flushFlag);
+    }
 }
