@@ -10,12 +10,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.altamiracorp.bigtable.model.*;
 import com.altamiracorp.bigtable.model.user.ModelUserContext;
@@ -415,7 +410,7 @@ public class AccumuloSessionTest {
         columnFamily.set("testColumn2", new Value("testValue2"), "A");
         row.addColumnFamily(columnFamily);
 
-        accumuloSession.alterAllColumnsVisibility(row, row.getTableName(), "B", queryUserWithAuthA, FlushFlag.FLUSH);
+        accumuloSession.alterAllColumnsVisibility(row, "B", queryUserWithAuthA, FlushFlag.FLUSH);
         assertNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));
         Row alteredRow = accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthB);
         assertNotNull(alteredRow);

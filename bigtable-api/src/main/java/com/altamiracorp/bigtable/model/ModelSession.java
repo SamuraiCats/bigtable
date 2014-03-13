@@ -158,10 +158,9 @@ public abstract class ModelSession {
      * Alters all columns of the provided row to the provided visibility.
      *
      * @param row
-     * @param tableName
      * @param visibility
      * @param user
      * @param flushFlag
      */
-    public abstract void alterAllColumnsVisibility (Row row, String tableName, String visibility, ModelUserContext user, FlushFlag flushFlag);
+    public abstract void alterAllColumnsVisibility(Row row, String visibility, ModelUserContext user, FlushFlag flushFlag);
 }

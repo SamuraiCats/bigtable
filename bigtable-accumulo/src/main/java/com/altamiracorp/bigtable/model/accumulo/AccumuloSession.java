@@ -1,27 +1,12 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.BatchWriterConfig;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.RowIterator;
+import com.altamiracorp.bigtable.model.*;
+import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
+import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -34,16 +19,8 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.altamiracorp.bigtable.model.Column;
-import com.altamiracorp.bigtable.model.ColumnFamily;
-import com.altamiracorp.bigtable.model.FlushFlag;
-import com.altamiracorp.bigtable.model.ModelSession;
-import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.RowKey;
-import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
-import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -497,7 +474,8 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void alterAllColumnsVisibility (Row row, String tableName, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+    public void alterAllColumnsVisibility(Row row, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+        String tableName = row.getTableName();
         Row copyRow = new Row(tableName, row.getRowKey());
         Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
         for (ColumnFamily columnFamily : columnFamilies) {

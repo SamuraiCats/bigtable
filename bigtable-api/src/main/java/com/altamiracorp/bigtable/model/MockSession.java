@@ -163,7 +163,8 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void alterAllColumnsVisibility (Row row, String tableName, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+    public void alterAllColumnsVisibility (Row row, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+        String tableName = row.getTableName();
         Row copyRow = new Row (tableName, row.getRowKey());
         List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
         for (ColumnFamily columnFamily : columnFamilies) {
