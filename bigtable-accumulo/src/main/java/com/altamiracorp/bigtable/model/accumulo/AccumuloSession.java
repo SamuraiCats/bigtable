@@ -1,27 +1,12 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.BatchWriterConfig;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.IteratorSetting;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.RowIterator;
+import com.altamiracorp.bigtable.model.*;
+import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
+import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableExistsException;
-import org.apache.accumulo.core.client.TableNotFoundException;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -34,16 +19,8 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.altamiracorp.bigtable.model.Column;
-import com.altamiracorp.bigtable.model.ColumnFamily;
-import com.altamiracorp.bigtable.model.FlushFlag;
-import com.altamiracorp.bigtable.model.ModelSession;
-import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.RowKey;
-import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
-import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class AccumuloSession extends ModelSession {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumuloSession.class);
@@ -101,7 +78,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     /**
-     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations
+     * @throws MutationsWriteException    Thrown if the Accumulo writer was unable to write mutations
      * @throws TableDoesNotExistException Thrown if an Accumulo writer cannot be setup for the row's table
      */
     @Override
@@ -134,7 +111,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     /**
-     * @throws MutationsWriteException Thrown if the Accumulo writer was unable to write mutations
+     * @throws MutationsWriteException    Thrown if the Accumulo writer was unable to write mutations
      * @throws TableDoesNotExistException Thrown if an Accumulo writer cannot be setup for the row's table
      */
     @Override
@@ -339,8 +316,8 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
-        LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
+    public void deleteRow(String tableName, RowKey rowKey) {
+        LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?", tableName, rowKey);
         // In most instances (e.g., when reading is not necessary), the
         // RowDeletingIterator gives better performance than the deleting
         // mutation. This is due to the fact that Deleting mutations marks each
@@ -368,8 +345,8 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
-        LOGGER.trace("deleteColumn called with parameters: row=?, tableName=?, columnFamily=?, columnQualifier=?, user=?", row, tableName, columnFamily, columnQualifier, user);
+    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier) {
+        LOGGER.trace("deleteColumn called with parameters: row=?, tableName=?, columnFamily=?, columnQualifier=?", row, tableName, columnFamily, columnQualifier);
         try {
             BatchWriter writer = getBatchWriter(tableName);
             Mutation mutation = createMutationFromRow(row);
@@ -494,6 +471,23 @@ public class AccumuloSession extends ModelSession {
         if (properties.get(ZK_SERVER_NAMES) == null) {
             throw new IllegalStateException("Configuration property " + ZK_SERVER_NAMES + " missing!");
         }
+    }
+
+    @Override
+    public void alterAllColumnsVisibility(Row row, String visibility, FlushFlag flushFlag) {
+        String tableName = row.getTableName();
+        Row copyRow = new Row(tableName, row.getRowKey());
+        Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
+        for (ColumnFamily columnFamily : columnFamilies) {
+            ColumnFamily copyColumnFamily = new ColumnFamily(columnFamily.getColumnFamilyName());
+            for (Column column : columnFamily.getColumns()) {
+                Column copyColumn = new Column(column.getName(), column.getValue(), visibility);
+                copyColumnFamily.addColumn(copyColumn);
+            }
+            copyRow.addColumnFamily(copyColumnFamily);
+        }
+        deleteRow(tableName, row.getRowKey());
+        save(copyRow, flushFlag);
     }
 
 }

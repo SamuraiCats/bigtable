@@ -117,7 +117,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
+    public void deleteRow(String tableName, RowKey rowKey) {
         String rowKeyStr = rowKey.toString();
         List<Row> rows = this.tables.get(tableName);
         for (int i = 0; i < rows.size(); i++) {
@@ -128,7 +128,7 @@ public class MockSession extends ModelSession {
         }
     }
 
-    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
+    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier) {
         List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
         for (int i = 0; i < columnFamilies.size(); i++) {
             if (columnFamilies.get(i).getColumnFamilyName().equals(columnFamily)) {
@@ -160,5 +160,22 @@ public class MockSession extends ModelSession {
     @Override
     public ModelUserContext createModelUserContext(String... authorizations) {
         return new MockModelUserContext();
+    }
+
+    @Override
+    public void alterAllColumnsVisibility (Row row, String visibility, FlushFlag flushFlag) {
+        String tableName = row.getTableName();
+        Row copyRow = new Row (tableName, row.getRowKey());
+        List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
+        for (ColumnFamily columnFamily : columnFamilies) {
+            ColumnFamily copyColumnFamily = new ColumnFamily(columnFamily.getColumnFamilyName());
+            for (Column column : columnFamily.getColumns()) {
+                Column copyColumn = new Column(column.getName(), column.getValue(), visibility);
+                copyColumnFamily.addColumn(copyColumn);
+            }
+            copyRow.addColumnFamily(copyColumnFamily);
+        }
+        deleteRow(tableName, row.getRowKey());
+        save(copyRow, flushFlag);
     }
 }

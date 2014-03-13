@@ -1,40 +1,20 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.BatchWriter;
-import org.apache.accumulo.core.client.BatchWriterConfig;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.MutationsRejectedException;
-import org.apache.accumulo.core.client.RowIterator;
+import com.altamiracorp.bigtable.model.Column;
+import com.altamiracorp.bigtable.model.*;
+import com.altamiracorp.bigtable.model.Value;
+import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
+import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
+import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
+import com.beust.jcommander.internal.Lists;
+import com.beust.jcommander.internal.Maps;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.client.mock.MockConnector;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.client.security.SecurityErrorCode;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.accumulo.core.data.ConstraintViolationSummary;
-import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.KeyExtent;
-import org.apache.accumulo.core.data.Mutation;
-import org.apache.accumulo.core.data.Range;
+import org.apache.accumulo.core.data.*;
 import org.apache.accumulo.core.security.Authorizations;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,16 +26,12 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-import com.altamiracorp.bigtable.model.Column;
-import com.altamiracorp.bigtable.model.ColumnFamily;
-import com.altamiracorp.bigtable.model.Row;
-import com.altamiracorp.bigtable.model.RowKey;
-import com.altamiracorp.bigtable.model.Value;
-import com.altamiracorp.bigtable.model.exceptions.MutationsWriteException;
-import com.altamiracorp.bigtable.model.exceptions.TableDoesNotExistException;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
-import com.beust.jcommander.internal.Lists;
-import com.beust.jcommander.internal.Maps;
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(AccumuloHelper.class)
@@ -360,7 +336,7 @@ public class AccumuloSessionTest {
         row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNotNull("row should exist", row);
 
-        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"), queryUser);
+        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"));
 
         row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNull("row should be deleted", row);
@@ -406,5 +382,29 @@ public class AccumuloSessionTest {
         Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUserWithAuth);
         ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
         assertEquals(2, staffQueryColumnFamily.getColumns().size());
+    }
+
+    @Test
+    public void testAlterAllColumnsVisibility () {
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        AccumuloUserContext queryUserWithAuthA = new AccumuloUserContext(new Authorizations("A"));
+        AccumuloUserContext queryUserWithAuthB = new AccumuloUserContext(new Authorizations("B"));
+        ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
+        columnFamily.set("testColumn1", new Value("testValue1"), "A");
+        columnFamily.set("testColumn2", new Value("testValue2"), "A");
+        row.addColumnFamily(columnFamily);
+
+        accumuloSession.alterAllColumnsVisibility(row, "B", FlushFlag.FLUSH);
+        assertNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));
+        Row alteredRow = accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthB);
+        assertNotNull(alteredRow);
+        List<Column> columns = new ArrayList<Column>(alteredRow.get("testColumnFamily1").getColumns());
+        assertEquals(2, columns.size());
+        assertTrue(columns.get(0).getName().equals("testColumn2"));
+        assertTrue(columns.get(1).getName().equals("testColumn1"));
+
+        accumuloSession.save(row, FlushFlag.FLUSH);
+        assertNotNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));
+        assertNotNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthB));
     }
 }

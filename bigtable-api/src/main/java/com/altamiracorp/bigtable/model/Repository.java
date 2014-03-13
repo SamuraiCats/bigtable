@@ -95,8 +95,8 @@ public abstract class Repository<T extends Row> {
         };
     }
 
-    public void delete(RowKey rowKey, ModelUserContext user) {
-        modelSession.deleteRow(getTableName(), rowKey, user);
+    public void delete(RowKey rowKey) {
+        modelSession.deleteRow(getTableName(), rowKey);
     }
 
     protected ModelSession getModelSession() {
