@@ -157,7 +157,6 @@ public abstract class ModelSession {
      *
      * @param row
      * @param visibility
-     * @param user
      * @param flushFlag
      */
     public abstract void alterAllColumnsVisibility(Row row, String visibility, FlushFlag flushFlag);
