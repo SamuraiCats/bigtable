@@ -117,7 +117,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
+    public void deleteRow(String tableName, RowKey rowKey) {
         String rowKeyStr = rowKey.toString();
         List<Row> rows = this.tables.get(tableName);
         for (int i = 0; i < rows.size(); i++) {
@@ -128,7 +128,7 @@ public class MockSession extends ModelSession {
         }
     }
 
-    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
+    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier) {
         List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
         for (int i = 0; i < columnFamilies.size(); i++) {
             if (columnFamilies.get(i).getColumnFamilyName().equals(columnFamily)) {
@@ -163,7 +163,7 @@ public class MockSession extends ModelSession {
     }
 
     @Override
-    public void alterAllColumnsVisibility (Row row, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+    public void alterAllColumnsVisibility (Row row, String visibility, FlushFlag flushFlag) {
         String tableName = row.getTableName();
         Row copyRow = new Row (tableName, row.getRowKey());
         List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
@@ -175,7 +175,7 @@ public class MockSession extends ModelSession {
             }
             copyRow.addColumnFamily(copyColumnFamily);
         }
-        deleteRow(tableName, row.getRowKey(), user);
+        deleteRow(tableName, row.getRowKey());
         save(copyRow, flushFlag);
     }
 }

@@ -113,9 +113,8 @@ public abstract class ModelSession {
      *
      * @param tableName
      * @param rowKey
-     * @param user
      */
-    public abstract void deleteRow(String tableName, RowKey rowKey, ModelUserContext user);
+    public abstract void deleteRow(String tableName, RowKey rowKey);
 
     /**
      * Delete a specific column on the provided row
@@ -124,9 +123,8 @@ public abstract class ModelSession {
      * @param tableName
      * @param columnFamily
      * @param columnQualifier
-     * @param user
      */
-    public abstract void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user);
+    public abstract void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier);
 
     /**
      * Returns the full list of tables in the provider data store
@@ -162,5 +160,5 @@ public abstract class ModelSession {
      * @param user
      * @param flushFlag
      */
-    public abstract void alterAllColumnsVisibility(Row row, String visibility, ModelUserContext user, FlushFlag flushFlag);
+    public abstract void alterAllColumnsVisibility(Row row, String visibility, FlushFlag flushFlag);
 }

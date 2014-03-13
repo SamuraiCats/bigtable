@@ -316,8 +316,8 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void deleteRow(String tableName, RowKey rowKey, ModelUserContext user) {
-        LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?, user=?", tableName, rowKey, user);
+    public void deleteRow(String tableName, RowKey rowKey) {
+        LOGGER.trace("deleteRow called with parameters: tableName=?, rowKey=?", tableName, rowKey);
         // In most instances (e.g., when reading is not necessary), the
         // RowDeletingIterator gives better performance than the deleting
         // mutation. This is due to the fact that Deleting mutations marks each
@@ -345,8 +345,8 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, ModelUserContext user) {
-        LOGGER.trace("deleteColumn called with parameters: row=?, tableName=?, columnFamily=?, columnQualifier=?, user=?", row, tableName, columnFamily, columnQualifier, user);
+    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier) {
+        LOGGER.trace("deleteColumn called with parameters: row=?, tableName=?, columnFamily=?, columnQualifier=?", row, tableName, columnFamily, columnQualifier);
         try {
             BatchWriter writer = getBatchWriter(tableName);
             Mutation mutation = createMutationFromRow(row);
@@ -474,7 +474,7 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void alterAllColumnsVisibility(Row row, String visibility, ModelUserContext user, FlushFlag flushFlag) {
+    public void alterAllColumnsVisibility(Row row, String visibility, FlushFlag flushFlag) {
         String tableName = row.getTableName();
         Row copyRow = new Row(tableName, row.getRowKey());
         Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
@@ -486,7 +486,7 @@ public class AccumuloSession extends ModelSession {
             }
             copyRow.addColumnFamily(copyColumnFamily);
         }
-        deleteRow(tableName, row.getRowKey(), user);
+        deleteRow(tableName, row.getRowKey());
         save(copyRow, flushFlag);
     }
 

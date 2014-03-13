@@ -352,7 +352,7 @@ public class AccumuloSessionTest {
         row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNotNull("row should exist", row);
 
-        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"), queryUser);
+        accumuloSession.deleteRow(TEST_TABLE_NAME, new RowKey("testRowKey1"));
 
         row = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUser);
         assertNull("row should be deleted", row);
@@ -410,7 +410,7 @@ public class AccumuloSessionTest {
         columnFamily.set("testColumn2", new Value("testValue2"), "A");
         row.addColumnFamily(columnFamily);
 
-        accumuloSession.alterAllColumnsVisibility(row, "B", queryUserWithAuthA, FlushFlag.FLUSH);
+        accumuloSession.alterAllColumnsVisibility(row, "B", FlushFlag.FLUSH);
         assertNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));
         Row alteredRow = accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthB);
         assertNotNull(alteredRow);
