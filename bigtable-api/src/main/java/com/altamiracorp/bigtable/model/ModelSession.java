@@ -154,11 +154,12 @@ public abstract class ModelSession {
     public abstract ModelUserContext createModelUserContext(String... authorizations);
 
     /**
-     * Alters all columns of the provided row to the provided visibility.
+     * Alter columns that match a particular column visibility of the provided row to the provided visibility.
      *
      * @param row
-     * @param visibility
+     * @param matchVisibility
+     * @param newVisibility
      * @param flushFlag
      */
-    public abstract void alterAllColumnsVisibility(Row row, String visibility, FlushFlag flushFlag);
+    public abstract void alterColumnsVisibility(Row row, String matchVisibility,  String newVisibility, FlushFlag flushFlag);
 }

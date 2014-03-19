@@ -414,23 +414,28 @@ public class AccumuloSessionTest {
     }
 
     @Test
-    public void testAlterAllColumnsVisibility () {
+    public void testAlterColumnsVisibility () {
         Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
         AccumuloUserContext queryUserWithAuthA = new AccumuloUserContext(new Authorizations("A"));
         AccumuloUserContext queryUserWithAuthB = new AccumuloUserContext(new Authorizations("B"));
+        AccumuloUserContext queryUserWithAuthBandC = new AccumuloUserContext(new Authorizations("B","C"));
         ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
         columnFamily.set("testColumn1", new Value("testValue1"), "A");
         columnFamily.set("testColumn2", new Value("testValue2"), "A");
+        columnFamily.set("testColumn3", new Value("testValue3"), "C");
+        columnFamily.set("testColumn4", new Value("testValue4"), "C");
         row.addColumnFamily(columnFamily);
 
-        accumuloSession.alterAllColumnsVisibility(row, "B", FlushFlag.FLUSH);
+        accumuloSession.alterColumnsVisibility(row, "A", "B", FlushFlag.FLUSH);
         assertNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));
-        Row alteredRow = accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthB);
+        Row alteredRow = accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthBandC);
         assertNotNull(alteredRow);
         List<Column> columns = new ArrayList<Column>(alteredRow.get("testColumnFamily1").getColumns());
-        assertEquals(2, columns.size());
-        assertTrue(columns.get(0).getName().equals("testColumn2"));
-        assertTrue(columns.get(1).getName().equals("testColumn1"));
+        assertEquals(4, columns.size());
+        assertTrue(columns.get(0).getName().equals("testColumn2") && columns.get(0).getVisibility().equals("B"));
+        assertTrue(columns.get(1).getName().equals("testColumn3") && columns.get(1).getVisibility().equals("C"));
+        assertTrue(columns.get(2).getName().equals("testColumn1") && columns.get(2).getVisibility().equals("B"));
+        assertTrue(columns.get(3).getName().equals("testColumn4") && columns.get(3).getVisibility().equals("C"));
 
         accumuloSession.save(row, FlushFlag.FLUSH);
         assertNotNull(accumuloSession.findByRowKey(row.getTableName(), row.getRowKey().toString(), queryUserWithAuthA));

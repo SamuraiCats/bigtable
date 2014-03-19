@@ -469,15 +469,19 @@ public class AccumuloSession extends ModelSession {
     }
 
     @Override
-    public void alterAllColumnsVisibility(Row row, String visibility, FlushFlag flushFlag) {
+    public void alterColumnsVisibility(Row row, String matchVisibility,  String newVisibility, FlushFlag flushFlag) {
         String tableName = row.getTableName();
         Row copyRow = new Row(tableName, row.getRowKey());
         Collection<ColumnFamily> columnFamilies = row.getColumnFamilies();
         for (ColumnFamily columnFamily : columnFamilies) {
             ColumnFamily copyColumnFamily = new ColumnFamily(columnFamily.getColumnFamilyName());
             for (Column column : columnFamily.getColumns()) {
-                Column copyColumn = new Column(column.getName(), column.getValue(), visibility);
-                copyColumnFamily.addColumn(copyColumn);
+                if (column.getVisibility().equals(matchVisibility)) {
+                    Column copyColumn = new Column(column.getName(), column.getValue(), newVisibility);
+                    copyColumnFamily.addColumn(copyColumn);
+                } else {
+                    copyColumnFamily.addColumn(column);
+                }
             }
             copyRow.addColumnFamily(copyColumnFamily);
         }
