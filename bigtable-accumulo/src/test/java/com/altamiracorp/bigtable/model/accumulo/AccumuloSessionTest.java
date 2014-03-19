@@ -364,6 +364,35 @@ public class AccumuloSessionTest {
     }
 
     @Test
+    public void testDeleteColumn () {
+        Row row = new Row<RowKey> (TEST_TABLE_NAME, new RowKey("testRowKey1"));
+        AccumuloUserContext queryUserWithAuth = new AccumuloUserContext(new Authorizations("B"));
+        ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
+        columnFamily.set("testColumn1", "testValue1");
+        columnFamily.set("testColumn2", new Value("testValue2"), "A|B");
+        columnFamily.set("testColumn3", new Value("testValue3"), "A");
+        row.addColumnFamily(columnFamily);
+
+        accumuloSession.save(row);
+
+        Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUserWithAuth);
+        ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
+        List <Column> columns = new ArrayList<Column>(staffQueryColumnFamily.getColumns());
+
+        assertEquals(2, staffQueryColumnFamily.getColumns().size());
+        assertTrue(columns.get(0).getName().equals("testColumn2"));
+        assertTrue(columns.get(1).getName().equals("testColumn1"));
+
+        columns.get(0).setDirty(true);
+        accumuloSession.deleteColumn(staffQueryRow, staffQueryRow.getTableName(), "testColumnFamily1", "testColumn2", "A|B");
+        staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUserWithAuth);
+        staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
+        columns = new ArrayList<Column>(staffQueryColumnFamily.getColumns());
+        assertEquals(1, columns.size());
+        assertTrue(columns.get(0).getName().equals("testColumn1"));
+    }
+
+    @Test
     public void testSetWithColumnVisibility() {
         Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
         AccumuloUserContext queryUserWithAuth = new AccumuloUserContext(new Authorizations("B"));

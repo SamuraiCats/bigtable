@@ -128,13 +128,14 @@ public class MockSession extends ModelSession {
         }
     }
 
-    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier) {
+    @Override
+    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, String columnVisibility) {
         List<ColumnFamily> columnFamilies = (List<ColumnFamily>) row.getColumnFamilies();
         for (int i = 0; i < columnFamilies.size(); i++) {
             if (columnFamilies.get(i).getColumnFamilyName().equals(columnFamily)) {
                 List<Column> columns = (List<Column>) columnFamilies.get(i).getColumns();
                 for (int j = 0; j < columns.size(); j++) {
-                    if (columns.get(j).getName().equals(columnQualifier)) {
+                    if (columns.get(j).getName().equals(columnQualifier) && columns.get(j).getVisibility().equals(columnVisibility)) {
                         columns.remove(j);
                         return;
                     }

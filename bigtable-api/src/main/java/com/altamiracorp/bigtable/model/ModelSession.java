@@ -123,8 +123,9 @@ public abstract class ModelSession {
      * @param tableName
      * @param columnFamily
      * @param columnQualifier
+     * @param columnVisibility
      */
-    public abstract void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier);
+    public abstract void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, String columnVisibility);
 
     /**
      * Returns the full list of tables in the provider data store

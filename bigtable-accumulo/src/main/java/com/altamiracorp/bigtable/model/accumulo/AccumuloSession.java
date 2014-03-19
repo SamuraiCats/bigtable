@@ -14,6 +14,7 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.iterators.user.RowDeletingIterator;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
@@ -344,24 +345,18 @@ public class AccumuloSession extends ModelSession {
         }
     }
 
-    @Override
-    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier) {
+    public void deleteColumn(Row row, String tableName, String columnFamily, String columnQualifier, String columnVisibility) {
         LOGGER.trace("deleteColumn called with parameters: row=?, tableName=?, columnFamily=?, columnQualifier=?", row, tableName, columnFamily, columnQualifier);
         try {
             BatchWriter writer = getBatchWriter(tableName);
             Mutation mutation = createMutationFromRow(row);
-            mutation.putDelete(new Text(columnFamily), new Text(columnQualifier));
+            mutation.putDelete(new Text(columnFamily), new Text(columnQualifier), new ColumnVisibility(columnVisibility));
             writer.addMutation(mutation);
             if (autoflush) {
                 writer.flush();
-                connector.tableOperations().flush(tableName, null, null, true);
             }
         } catch (AccumuloException ae) {
             throw new RuntimeException(ae);
-        } catch (AccumuloSecurityException ase) {
-            throw new RuntimeException(ase);
-        } catch (TableNotFoundException tne) {
-            throw new RuntimeException(tne);
         }
     }
 
@@ -448,7 +443,7 @@ public class AccumuloSession extends ModelSession {
                     if (mutation == null) {
                         mutation = new Mutation(row.getRowKey().toString());
                     }
-                    mutation.put(columnFamily.getColumnFamilyName(), column.getName(), value);
+                    mutation.put(columnFamily.getColumnFamilyName(), column.getName(), new ColumnVisibility(column.getVisibility()), value);
                 }
             }
         }
