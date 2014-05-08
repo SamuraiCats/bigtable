@@ -1,18 +1,28 @@
 package com.altamiracorp.bigtableui.routes;
 
-import com.altamiracorp.bigtable.model.*;
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
-import com.altamiracorp.bigtableui.BigTableRepository;
-import com.altamiracorp.bigtableui.util.StringEscapeUtils;
-import com.altamiracorp.miniweb.HandlerChain;
-import com.google.inject.Inject;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.Arrays;
+import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.Collection;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import com.altamiracorp.bigtable.model.Column;
+import com.altamiracorp.bigtable.model.ColumnFamily;
+import com.altamiracorp.bigtable.model.ModelSession;
+import com.altamiracorp.bigtable.model.Row;
+import com.altamiracorp.bigtable.model.Value;
+import com.altamiracorp.bigtable.model.user.ModelUserContext;
+import com.altamiracorp.bigtableui.BigTableRepository;
+import com.altamiracorp.bigtableui.util.DisplayFormatUtils;
+import com.altamiracorp.bigtableui.util.StringEscapeUtils;
+import com.altamiracorp.miniweb.HandlerChain;
+import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import com.google.inject.Inject;
 
 public class Query extends BaseRequestHandler {
     public static final int MAX_VALUE_LENGTH = 10000;
@@ -59,8 +69,8 @@ public class Query extends BaseRequestHandler {
         json.put("tableName", tableName);
 
         String[] authorizations = authorizationsCommaSeparated.split(",");
-        ModelUserContext modelUserContext = this.modelSession.createModelUserContext(authorizations);
-        Iterable<Row> rows = this.bigTableRepository.query(tableName, start, end, modelUserContext);
+        ModelUserContext modelUserContext = modelSession.createModelUserContext(authorizations);
+        Iterable<Row> rows = bigTableRepository.query(tableName, start, end, modelUserContext);
         json.put("rows", rowsToJson(rows, rowCount));
 
         respondWithJson(response, json);
@@ -106,17 +116,30 @@ public class Query extends BaseRequestHandler {
 
     private JSONObject columnToJson(Column column) {
         Value value = column.getValue();
-        byte[] v = value.toBytes();
-        if (v.length > MAX_VALUE_LENGTH) {
-            v = Arrays.copyOfRange(v, 0, 10000);
+        byte[] valueBytes = value.toBytes();
+        if (valueBytes.length > MAX_VALUE_LENGTH) {
+            valueBytes = Arrays.copyOfRange(valueBytes, 0, 10000);
         }
 
+
         JSONObject result = new JSONObject();
-        result.put("value", new String(v));
-        result.put("length", value.toBytes().length);
+        result.put("value", new String(valueBytes));
+        result.put("length", valueBytes.length);
         if (column.getVisibility() != null && !column.getVisibility().equals("[]")) {
             result.put("visibility", column.getVisibility());
         }
+
+        // Provide a hex string of the raw column value for all values
+        result.put("rawAsHexString", DisplayFormatUtils.generateHexString(valueBytes));
+
+        // Provide a readable string of the raw column value based on value byte length
+        if( valueBytes.length == Ints.BYTES ) {
+            result.put("rawAsIntString", DisplayFormatUtils.generateFormattedNumber(value.toInteger()));
+        } else if( valueBytes.length == Longs.BYTES && valueBytes.length == Doubles.BYTES ) {
+            result.put("rawAsLongString", DisplayFormatUtils.generateFormattedNumber(value.toLong()));
+            result.put("rawAsDoubleString", DisplayFormatUtils.generateFormattedDecimal(value.toDouble()));
+        }
+
         return result;
     }
 }

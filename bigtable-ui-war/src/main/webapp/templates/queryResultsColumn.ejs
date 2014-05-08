@@ -1,12 +1,26 @@
 <%= bytesToString(value) %>
+<% if(length == 4 || length == 8) { %>
+    <div class='additional-info'>
+        <div class='name'><small>as Hex</small></div>
+        <div class='value'><%= rawAsHexString %></div>
+    </div>
+<% } %>
+
+<% if(length == 4) { %>
+    <div class='additional-info'>
+        <div class='name'><small>as Integer</small></div>
+        <div class='value'><%= rawAsIntString %></div>
+    </div>
+<% } %>
+
 <% if(length == 8) { %>
     <div class='additional-info'>
-        <div class='name'>as Long</div>
-        <div class='value'><%= bytesToLong(value) %></div>
+        <div class='name'><small>as Long</small></div>
+        <div class='value'><%= rawAsLongString %></div>
     </div>
 
     <div class='additional-info'>
-        <div class='name'>as Double</div>
-        <div class='value'><%= bytesToDouble(value) %></div>
+        <div class='name'><small>as Double</small></div>
+        <div class='value'><%= rawAsDoubleString %></div>
     </div>
 <% } %>

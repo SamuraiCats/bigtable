@@ -53,8 +53,6 @@ function onQueryTable(tableName, event) {
         .done(function (json) {
             console.log(json);
             json.columnToHtml = function (column) {
-                column.bytesToLong = bytesToLong;
-                column.bytesToDouble = bytesToDouble;
                 column.bytesToString = bytesToString;
                 return queryResultsColumnTemplate.render(column);
             };
