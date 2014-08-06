@@ -9,3 +9,14 @@
 .additional-info .value {
     padding-left: 1em;
 }
+
+.query-result-key {
+    max-width: 500px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-style: auto;
+}
+
+.query-result-value {
+    word-break: break-all;
+}

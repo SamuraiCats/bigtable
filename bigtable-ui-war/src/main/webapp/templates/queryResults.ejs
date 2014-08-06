@@ -20,13 +20,13 @@
                             <% if(columnIndex == 0) { %>
                                 <td rowspan="<%= Object.keys(columnFamily.columns).length %>"><%= bytesToString(columnFamilyKey) %></td>
                             <% } %>
-                            <td>
+                            <td class="query-result-key">
                                 <%= bytesToString(columnKey) %>
                                 <% if(column.visibility) { %>
                                     <small><%= column.visibility %></small>
                                 <% } %>
                             </td>
-                            <td style="word-break: break-word;"><%= columnToHtml(column) %></td>
+                            <td class="query-result-value"><%= columnToHtml(column) %></td>
                         </tr>
                     <% }) %>
                 <% }) %>
