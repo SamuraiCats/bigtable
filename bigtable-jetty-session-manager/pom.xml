@@ -13,7 +13,7 @@
     <name>BigTable: Jetty Session Manager</name>
 
     <properties>
-        <jetty.version>8.1.14.v20131031</jetty.version>
+        <jetty.version>9.2.5.v20141112</jetty.version>
         <guava.version>13.0.1</guava.version>
         <commons-lang.version>2.6</commons-lang.version>
     </properties>
@@ -39,6 +39,12 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
+            <version>${jetty.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-nosql</artifactId>
             <version>${jetty.version}</version>
             <scope>provided</scope>
         </dependency>

@@ -39,6 +39,10 @@ public class BigTableJettySessionIdManager extends AbstractSessionIdManager {
     }
 
     @Override
+    public void renewSessionId(String oldClusterId, String oldNodeId, HttpServletRequest request) {
+    }
+
+    @Override
     public String getClusterId(String nodeId) {
         int dot = nodeId.lastIndexOf('.');
         return dot > 0 ? nodeId.substring(0, dot) : nodeId;
