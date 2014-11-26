@@ -16,7 +16,7 @@
     <properties>
         <zookeeper-version>3.4.5</zookeeper-version>
         <accumulo-version>1.5.0</accumulo-version>
-        <hadoop-version>2.0.0-mr1-cdh4.4.0</hadoop-version>
+        <hadoop-version>2.3.0</hadoop-version>
     </properties>
 
     <dependencies>

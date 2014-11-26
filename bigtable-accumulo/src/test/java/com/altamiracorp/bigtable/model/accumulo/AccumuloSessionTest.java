@@ -16,6 +16,7 @@ import org.apache.accumulo.core.client.security.SecurityErrorCode;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.*;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +54,8 @@ public class AccumuloSessionTest {
     public void before() throws AccumuloSecurityException, AccumuloException {
         MockitoAnnotations.initMocks(this);
 
+        String[] userGroups = new String[0];
+        UserGroupInformation.setLoginUser(UserGroupInformation.createUserForTesting("test", userGroups));
         mockInstance = new MockInstance();
         connector = (MockConnector) mockInstance.getConnector("testUser", new PasswordToken("testPassword".getBytes()));
 
@@ -122,7 +125,7 @@ public class AccumuloSessionTest {
 
     private MutationsRejectedException createMutationsException() {
         final List<ConstraintViolationSummary> cvsList = Lists.newArrayList();
-        final Map<KeyExtent,Set<SecurityErrorCode>> authFailuresMap = Maps.newHashMap();
+        final Map<KeyExtent, Set<SecurityErrorCode>> authFailuresMap = Maps.newHashMap();
         final List<String> serverErrorList = Lists.newArrayList();
 
         return new MutationsRejectedException(cvsList, (HashMap<KeyExtent, Set<SecurityErrorCode>>) authFailuresMap, serverErrorList, -1, new Throwable());
@@ -364,8 +367,8 @@ public class AccumuloSessionTest {
     }
 
     @Test
-    public void testDeleteColumn () {
-        Row row = new Row<RowKey> (TEST_TABLE_NAME, new RowKey("testRowKey1"));
+    public void testDeleteColumn() {
+        Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
         AccumuloUserContext queryUserWithAuth = new AccumuloUserContext(new Authorizations("B"));
         ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
         columnFamily.set("testColumn1", "testValue1");
@@ -377,7 +380,7 @@ public class AccumuloSessionTest {
 
         Row staffQueryRow = accumuloSession.findByRowKey(TEST_TABLE_NAME, "testRowKey1", queryUserWithAuth);
         ColumnFamily staffQueryColumnFamily = staffQueryRow.get("testColumnFamily1");
-        List <Column> columns = new ArrayList<Column>(staffQueryColumnFamily.getColumns());
+        List<Column> columns = new ArrayList<Column>(staffQueryColumnFamily.getColumns());
 
         assertEquals(2, staffQueryColumnFamily.getColumns().size());
         assertTrue(columns.get(0).getName().equals("testColumn2"));
@@ -414,11 +417,11 @@ public class AccumuloSessionTest {
     }
 
     @Test
-    public void testAlterColumnsVisibility () {
+    public void testAlterColumnsVisibility() {
         Row row = new Row<RowKey>(TEST_TABLE_NAME, new RowKey("testRowKey1"));
         AccumuloUserContext queryUserWithAuthA = new AccumuloUserContext(new Authorizations("A"));
         AccumuloUserContext queryUserWithAuthB = new AccumuloUserContext(new Authorizations("B"));
-        AccumuloUserContext queryUserWithAuthBandC = new AccumuloUserContext(new Authorizations("B","C"));
+        AccumuloUserContext queryUserWithAuthBandC = new AccumuloUserContext(new Authorizations("B", "C"));
         ColumnFamily columnFamily = new ColumnFamily("testColumnFamily1");
         columnFamily.set("testColumn1", new Value("testValue1"), "A");
         columnFamily.set("testColumn2", new Value("testValue2"), "A");

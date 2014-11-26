@@ -1,7 +1,11 @@
 package com.altamiracorp.bigtable.model.accumulo;
 
 import com.altamiracorp.bigtable.model.Row;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.AuthenticationToken;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
@@ -11,9 +15,14 @@ import java.io.IOException;
 public class AccumuloModelOutputFormat extends OutputFormat<Text, Row> {
     private AccumuloOutputFormat accumuloOutputFormat = new AccumuloOutputFormat();
 
-    public static void init(Job job, String accumuloInstanceName, String zookeeperServers, String user, String password, String tableName) {
-        AccumuloOutputFormat.setZooKeeperInstance(job.getConfiguration(), accumuloInstanceName, zookeeperServers);
-        AccumuloOutputFormat.setOutputInfo(job.getConfiguration(), user, password.getBytes(), false, tableName);
+    public static void init(Job job, String accumuloInstanceName, String zookeeperServers, String user, String password, String tableName) throws AccumuloSecurityException {
+        ClientConfiguration clientConfig = new ClientConfiguration()
+                .withInstance(accumuloInstanceName)
+                .withZkHosts(zookeeperServers);
+        AccumuloOutputFormat.setZooKeeperInstance(job, clientConfig);
+        AuthenticationToken passwordToken = new PasswordToken(password);
+        AccumuloOutputFormat.setConnectorInfo(job, user, passwordToken);
+        AccumuloOutputFormat.setDefaultTableName(job, tableName);
     }
 
     @Override

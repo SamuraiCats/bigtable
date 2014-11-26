@@ -13,8 +13,8 @@
     <name>BigTable: Accumulo</name>
 
     <properties>
-        <accumulo-version>1.5.0</accumulo-version>
-        <hadoop-version>0.20.2</hadoop-version>
+        <accumulo-version>1.6.1</accumulo-version>
+        <hadoop-version>2.3.0</hadoop-version>
     </properties>
 
     <dependencies>
@@ -44,7 +44,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
+            <artifactId>hadoop-client</artifactId>
             <version>${hadoop-version}</version>
         </dependency>
         <dependency>
@@ -62,7 +62,6 @@
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
             <version>1.10</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-collections</groupId>
