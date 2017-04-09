@@ -1,6 +1,6 @@
 package com.altamiracorp.bigtableui.routes;
 
-import com.altamiracorp.miniweb.Handler;
+import io.lumify.miniweb.Handler;
 import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletResponse;

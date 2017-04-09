@@ -1,12 +1,9 @@
 package com.altamiracorp.bigtableui.routes;
 
-import com.altamiracorp.bigtable.model.user.ModelUserContext;
-import com.altamiracorp.bigtable.model.user.accumulo.AccumuloUserContext;
 import com.altamiracorp.bigtableui.BigTableRepository;
 import com.altamiracorp.bigtableui.model.Table;
-import com.altamiracorp.miniweb.HandlerChain;
 import com.google.inject.Inject;
-import org.apache.accumulo.core.security.Authorizations;
+import io.lumify.miniweb.HandlerChain;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -22,7 +19,6 @@ public class TableGet extends BaseRequestHandler {
         this.bigTableRepository = bigTableRepository;
     }
 
-    @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, HandlerChain chain) throws Exception {
         JSONObject results = new JSONObject();
 

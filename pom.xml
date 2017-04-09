@@ -8,6 +8,12 @@
     <packaging>pom</packaging>
     <version>0.5.1-SNAPSHOT</version>
 
+    <scm>
+        <url>https://github.com/jonyt/bigtable</url>
+        <connection>scm:git:git://github.com/jonyt/bigtable.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jonyt/bigtable.git</developerConnection>
+    </scm>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -24,36 +30,7 @@
         <powermock.version>1.5.1</powermock.version>
     </properties>
 
-    <scm>
-        <url>https://github.com/altamiracorp/bigtable-ui</url>
-        <connection>scm:git:git://github.com/altamiracorp/bigtable-ui.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/altamiracorp/bigtable-ui.git</developerConnection>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>bits.lumify.io.releases</id>
-            <url>file:///var/www/maven/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>bits.lumify.io.snapshots</id>
-            <url>file:///var/www/maven/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>ext-releases</id>
-            <url>http://bits.lumify.io/m2/releases/</url>
-        </repository>
-        <repository>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-            <id>ext-snapshots</id>
-            <url>http://bits.lumify.io/m2/snapshots/</url>
-        </repository>
+    <repositories>        
         <repository>
             <id>com.cloudera</id>
             <url>https://repository.cloudera.com/content/repositories/releases/</url>

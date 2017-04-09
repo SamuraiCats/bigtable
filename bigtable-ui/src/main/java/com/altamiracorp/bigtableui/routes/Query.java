@@ -18,7 +18,7 @@ import com.altamiracorp.bigtable.model.user.ModelUserContext;
 import com.altamiracorp.bigtableui.BigTableRepository;
 import com.altamiracorp.bigtableui.util.DisplayFormatUtils;
 import com.altamiracorp.bigtableui.util.StringEscapeUtils;
-import com.altamiracorp.miniweb.HandlerChain;
+import io.lumify.miniweb.HandlerChain;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -37,7 +37,6 @@ public class Query extends BaseRequestHandler {
         this.bigTableRepository = bigTableRepository;
     }
 
-    @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, HandlerChain chain) throws Exception {
         final String tableName = (String) request.getAttribute("tableName");
         String authorizationsCommaSeparated = request.getParameter("authorizations");
@@ -118,6 +117,7 @@ public class Query extends BaseRequestHandler {
         Value value = column.getValue();
         byte[] valueBytes = value.toBytes();
         if (valueBytes.length > MAX_VALUE_LENGTH) {
+            //noinspection Since15
             valueBytes = Arrays.copyOfRange(valueBytes, 0, 10000);
         }
 
