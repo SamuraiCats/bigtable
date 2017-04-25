@@ -9,9 +9,9 @@
     <version>0.5.1-SNAPSHOT</version>
 
     <scm>
-        <url>https://github.com/jonyt/bigtable</url>
-        <connection>scm:git:git://github.com/jonyt/bigtable.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jonyt/bigtable.git</developerConnection>
+        <url>https://github.com/SamuraiCats/bigtable</url>
+        <connection>scm:git:git://github.com/SamuraiCats/bigtable.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/SamuraiCats/bigtable.git</developerConnection>
     </scm>
 
     <properties>
